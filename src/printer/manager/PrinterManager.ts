@@ -1,4 +1,5 @@
 import { Printer } from '../models/Printer';
+import { UsbDriver } from '../drivers/UsbDriver';
 
 export interface PrinterDriver {
   discover(): Promise<Printer[]>;
@@ -6,9 +7,11 @@ export interface PrinterDriver {
 
 export class PrinterManager {
   drivers: PrinterDriver[];
+  private usbDriver: UsbDriver;
 
-  constructor(drivers: PrinterDriver[] = []) {
+  constructor(drivers: PrinterDriver[] = [], usbDriver: UsbDriver = new UsbDriver()) {
     this.drivers = drivers;
+    this.usbDriver = usbDriver;
   }
 
   registerDriver(driver: PrinterDriver) {
@@ -20,5 +23,23 @@ export class PrinterManager {
       this.drivers.map((driver) => driver.discover().catch(() => []))
     );
     return results.flat();
+  }
+
+  /**
+   * In test tới 1 máy in cụ thể.
+   * printerId có thể match theo id (hash) hoặc theo tên hệ thống.
+   */
+  async print(printerId: string, data: Buffer): Promise<{ id: string; name: string }> {
+    const printers = await this.discoverAll();
+    const target = printers.find((p) => p.id === printerId || p.name === printerId);
+    console.log("Target: ", target);
+
+    if (!target) {
+      throw new Error(`Không tìm thấy máy in: ${printerId}`);
+    }
+
+    await this.usbDriver.write(target.name, data);
+
+    return { id: target.id, name: target.name };
   }
 }
