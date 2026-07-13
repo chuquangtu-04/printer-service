@@ -108,3 +108,103 @@ Invoke-RestMethod -Uri 'http://localhost:9000/api/printers/test' `
   -Headers @{ 'Content-Type' = 'application/json' } `
   -Body '{"printerId": "prn_603a575eba52"}'
 ```
+
+---
+
+## 4. API In theo luồng chuẩn (Print Pipeline - Phase 5)
+API này dùng để in hóa đơn, in bếp, v.v. thông qua cơ chế alias (chỉ định cấu hình ảo `cashier`, `kitchen`) và sử dụng các template (như `receipt`). Việc cấu hình mapping máy in vật lý được chỉnh trong file `printers.json`.
+
+- **Endpoint:** `/api/print`
+- **Method:** `POST`
+- **Mô tả:** Nhận request in từ phần mềm POS, chọn builder dựng dữ liệu tương ứng với template, sau đó tự động tra cứu alias để in ra máy vật lý thực tế.
+- **Headers yêu cầu:** 
+  - `Content-Type: application/json`
+- **Body yêu cầu (JSON):**
+  ```json
+  {
+    "printer": "cashier", 
+    "template": "receipt",
+    "data": {
+      "storeName": "CUA HANG ABC",
+      "orderId": "DH00123",
+      "items": [
+        { "name": "Ca phe sua", "qty": 2, "price": 25000 },
+        { "name": "Banh mi", "qty": 1, "price": 15000 }
+      ],
+      "note": "Cam on quy khach!"
+    }
+  }
+  ```
+  *(Các field có thể khác nhau tùy loại `template` bạn sử dụng)*
+
+**Các Response trả về:**
+- **200 OK:** In thành công hoặc đẩy lệnh in vào hàng đợi thành công (trả về `{ "success": true, "message": "Đã gửi lệnh in tới \"cashier\" (XP-T80A)" }`).
+- **400 Bad Request:** Nếu gửi thiếu field `printer`, `template`, `data` hoặc nếu `template` không được hỗ trợ.
+- **404 Not Found:** Nếu alias máy in không có trong cấu hình, hoặc máy in vật lý tương ứng đang offline.
+
+**Cách gọi (cURL):**
+```bash
+curl -X POST http://localhost:9000/api/print \
+  -H "Content-Type: application/json" \
+  -d '{
+    "printer": "cashier",
+    "template": "receipt",
+    "data": {
+      "storeName": "CUA HANG ABC",
+      "orderId": "DH00123",
+      "items": [
+        { "name": "Ca phe sua", "qty": 2, "price": 25000 },
+        { "name": "Banh mi", "qty": 1, "price": 15000 }
+      ],
+      "note": "Cam on quy khach!"
+    }
+  }'
+```
+
+**Cách gọi (JavaScript/Fetch):**
+```javascript
+fetch('http://localhost:9000/api/print', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    printer: "cashier",
+    template: "receipt",
+    data: {
+      storeName: "CUA HANG ABC",
+      orderId: "DH00123",
+      items: [
+        { name: "Ca phe sua", qty: 2, price: 25000 },
+        { name: "Banh mi", qty: 1, price: 15000 }
+      ],
+      note: "Cam on quy khach!"
+    }
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
+
+**Cách gọi (PowerShell):**
+```powershell
+$body = @{
+    printer = "cashier"
+    template = "receipt"
+    data = @{
+        storeName = "CUA HANG ABC"
+        orderId = "DH00123"
+        items = @(
+            @{ name = "Ca phe sua"; qty = 2; price = 25000 },
+            @{ name = "Banh mi"; qty = 1; price = 15000 }
+        )
+        note = "Cam on quy khach!"
+    }
+} | ConvertTo-Json -Depth 5
+
+Invoke-RestMethod -Uri 'http://localhost:9000/api/print' `
+  -Method Post `
+  -Headers @{ 'Content-Type' = 'application/json' } `
+  -Body $body
+```

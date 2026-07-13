@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPrinters, testPrint } from '../controllers/printer.controller';
+import { getPrinters, testPrint } from '../controllers/printerController';
 
 const router = Router();
 router.get('/printers', getPrinters);

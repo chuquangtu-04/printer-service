@@ -32,7 +32,6 @@ export class PrinterManager {
   async print(printerId: string, data: Buffer): Promise<{ id: string; name: string }> {
     const printers = await this.discoverAll();
     const target = printers.find((p) => p.id === printerId || p.name === printerId);
-    console.log("Target: ", target);
 
     if (!target) {
       throw new Error(`Không tìm thấy máy in: ${printerId}`);
