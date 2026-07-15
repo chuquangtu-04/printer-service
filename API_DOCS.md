@@ -137,6 +137,65 @@ API này dùng để in hóa đơn, in bếp, v.v. thông qua cơ chế alias (c
   ```
   *(Các field có thể khác nhau tùy loại `template` bạn sử dụng)*
 
+### Các template được hỗ trợ hiện tại:
+
+#### 1. `receipt` (Hóa đơn thanh toán)
+Dùng cho in hóa đơn đưa khách hàng. Cần các trường `items` (name, qty, price), có thể có `storeName`, `orderId`, `total`, `note`.
+
+#### 2. `kitchen` (Phiếu bếp)
+Dùng cho máy in bếp, in chữ to dễ đọc, không hiển thị giá tiền, có kèm ghi chú.
+**Ví dụ Body (JSON):**
+```json
+{
+  "printer": "kitchen", 
+  "template": "kitchen",
+  "data": {
+    "table": "05",
+    "orderId": "DH00123",
+    "items": [
+      { "name": "Pho bo", "qty": 2, "note": "khong hanh" },
+      { "name": "Goi cuon", "qty": 1 }
+    ]
+  }
+}
+```
+
+#### 3. `bill` (Hóa đơn tạm tính)
+Dùng cho việc in hóa đơn tạm tính trước khi khách thanh toán, hỗ trợ hiển thị thông tin giảm giá, thuế.
+**Ví dụ Body (JSON):**
+```json
+{
+  "printer": "cashier", 
+  "template": "bill",
+  "data": {
+    "storeName": "CUA HANG ABC",
+    "table": "05",
+    "items": [
+      { "name": "Pho bo", "qty": 2, "price": 45000 },
+      { "name": "Goi cuon", "qty": 1, "price": 15000 }
+    ],
+    "discount": 5000,
+    "tax": 10000
+  }
+}
+```
+
+#### 4. `label` (Tem nhãn sản phẩm)
+Dùng để in tem dán lên từng ly nước, sản phẩm (thường dùng khổ giấy nhỏ).
+**Ví dụ Body (JSON):**
+```json
+{
+  "printer": "cashier", 
+  "template": "label",
+  "data": {
+    "productName": "Tra Sua Tran Chau",
+    "price": 35000,
+    "note": "It da, 50% duong",
+    "barcode": "893123456789"
+  }
+}
+```
+
 **Các Response trả về:**
 - **200 OK:** In thành công hoặc đẩy lệnh in vào hàng đợi thành công (trả về `{ "success": true, "message": "Đã gửi lệnh in tới \"cashier\" (XP-T80A)" }`).
 - **400 Bad Request:** Nếu gửi thiếu field `printer`, `template`, `data` hoặc nếu `template` không được hỗ trợ.

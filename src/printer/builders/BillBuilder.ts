@@ -1,24 +1,26 @@
 import { BaseBuilder } from './BaseBuilder';
 import { EscposCommands as C } from './EscposCommands';
 
-export interface ReceiptItem {
+export interface BillItem {
   name: string;
   qty: number;
   price: number;
 }
 
-export interface ReceiptData {
+export interface BillData {
   storeName?: string;
-  orderId?: string;
-  items: ReceiptItem[];
+  table?: string;
+  items: BillItem[];
   total?: number;
-  note?: string;
+  discount?: number;
+  tax?: number;
+  finalTotal?: number;
 }
 
-export class ReceiptBuilder extends BaseBuilder<ReceiptData> {
-  protected validate(data: ReceiptData): void {
+export class BillBuilder extends BaseBuilder<BillData> {
+  protected validate(data: BillData): void {
     if (!data || !Array.isArray(data.items) || data.items.length === 0) {
-      throw new Error('Dữ liệu hóa đơn không hợp lệ: thiếu "items"');
+      throw new Error('Dữ liệu bill không hợp lệ: thiếu "items"');
     }
     for (const item of data.items) {
       if (!item.name || typeof item.qty !== 'number' || typeof item.price !== 'number') {
@@ -27,19 +29,20 @@ export class ReceiptBuilder extends BaseBuilder<ReceiptData> {
     }
   }
 
-  protected renderHeader(data: ReceiptData): Buffer {
+  protected renderHeader(data: BillData): Buffer {
     const parts: Buffer[] = [C.INIT, C.ALIGN_CENTER];
     if (data.storeName) {
       parts.push(C.BOLD_ON, C.DOUBLE_SIZE_ON, C.text(data.storeName + '\n'), C.DOUBLE_SIZE_OFF, C.BOLD_OFF);
     }
-    if (data.orderId) parts.push(C.text(`Order: ${data.orderId}\n`));
+    parts.push(C.text('HOA DON TAM TINH\n'));
+    if (data.table) parts.push(C.text(`Ban: ${data.table}\n`));
     parts.push(C.text(new Date().toLocaleString('vi-VN') + '\n'));
     parts.push(C.line('-'));
     parts.push(C.ALIGN_LEFT);
     return Buffer.concat(parts);
   }
 
-  protected renderBody(data: ReceiptData): Buffer {
+  protected renderBody(data: BillData): Buffer {
     const parts: Buffer[] = [];
     let computedTotal = 0;
 
@@ -53,17 +56,19 @@ export class ReceiptBuilder extends BaseBuilder<ReceiptData> {
 
     parts.push(C.line('-'));
     const total = data.total ?? computedTotal;
-    parts.push(C.BOLD_ON, C.text(this.padLine('TOTAL', this.formatCurrency(total))), C.BOLD_OFF);
-
-    return Buffer.concat(parts);
-  }
-
-  protected renderFooter(data: ReceiptData): Buffer {
-    const parts: Buffer[] = [];
-    if (data.note) {
-      parts.push(C.FEED(1), C.ALIGN_CENTER, C.text(data.note + '\n'));
+    parts.push(C.text(this.padLine('Tong cong', this.formatCurrency(total))));
+    
+    if (data.discount) {
+      parts.push(C.text(this.padLine('Giam gia', `-${this.formatCurrency(data.discount)}`)));
     }
-    parts.push(C.FEED(3), C.CUT);
+    if (data.tax) {
+      parts.push(C.text(this.padLine('Thue', this.formatCurrency(data.tax))));
+    }
+    
+    const finalTotal = data.finalTotal ?? (total - (data.discount || 0) + (data.tax || 0));
+    parts.push(C.line('-'));
+    parts.push(C.BOLD_ON, C.text(this.padLine('THANH TOAN', this.formatCurrency(finalTotal))), C.BOLD_OFF);
+
     return Buffer.concat(parts);
   }
 }

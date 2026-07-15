@@ -2,9 +2,7 @@ import express from 'express';
 import cors from 'cors';
 
 // Routes
-import healthRoutes from './api/routes/healthRoutes';
-import printerRoutes from './api/routes/printerRoutes';
-import printRoutes from './api/routes/printRoutes';
+import routes from './api/routes';
 
 // Middleware
 import { errorHandler } from './api/middleware/errorHandler';
@@ -16,9 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.use('/api/health', healthRoutes);
-app.use('/api', printerRoutes);
-app.use('/api', printRoutes);
+app.use('/api', routes);
 
 // Error Handler
 app.use(errorHandler);
