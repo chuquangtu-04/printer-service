@@ -1,8 +1,19 @@
 import { Printer } from '../models/Printer';
 import { UsbDriver } from '../drivers/UsbDriver';
 
+export interface PrinterStatus {
+  id: string;
+  status: string;
+}
+
+export interface PrinterStatusTarget {
+  id: string;
+  printerName: string;
+}
+
 export interface PrinterDriver {
   discover(): Promise<Printer[]>;
+  status(): Promise<PrinterStatus[]>;
 }
 
 export class PrinterManager {
@@ -21,6 +32,25 @@ export class PrinterManager {
   async discoverAll(): Promise<Printer[]> {
     const results = await Promise.all(
       this.drivers.map((driver) => driver.discover().catch(() => []))
+    );
+    return results.flat();
+  }
+
+  async status(targets: PrinterStatusTarget[] = []): Promise<PrinterStatus[]> {
+    if (targets.length > 0) {
+      const printers = await this.discoverAll();
+
+      return targets.map((target) => {
+        const printer = printers.find((p) => p.name === target.printerName || p.id === target.printerName);
+        return {
+          id: target.id,
+          status: printer?.status ?? 'offline',
+        };
+      });
+    }
+
+    const results = await Promise.all(
+      this.drivers.map((driver) => driver.status().catch(() => []))
     );
     return results.flat();
   }

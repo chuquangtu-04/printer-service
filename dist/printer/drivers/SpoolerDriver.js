@@ -26,6 +26,13 @@ class SpoolerDriver {
                 return [];
         }
     }
+    async status() {
+        const printers = await this.discover();
+        return printers.map((printer) => ({
+            id: printer.name,
+            status: printer.status,
+        }));
+    }
     async _discoverWindows() {
         try {
             const { stdout } = await execAsync('powershell -NoProfile -Command "Get-CimInstance -ClassName Win32_Printer | ' +
@@ -34,12 +41,12 @@ class SpoolerDriver {
             if (!Array.isArray(raw))
                 raw = [raw]; // PS trả object đơn nếu chỉ có 1 máy in
             return raw.map((p) => new Printer_1.Printer({
-                id: this._buildId(p.Name, p.PortName),
+                id: this._buildId(p.Name, p.PortName ?? ''),
                 name: p.Name,
                 type: this._classifyPort(p.PortName),
                 status: p.WorkOffline ? 'offline' : 'online',
                 isDefault: !!p.Default,
-                port: p.PortName,
+                port: p.PortName ?? null,
             }));
         }
         catch {

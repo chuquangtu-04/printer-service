@@ -11,7 +11,7 @@ import { TemplateNotFoundError } from '../../common/errors';
  * Thêm BillBuilder/LabelBuilder sau này: viết class kế thừa BaseBuilder,
  * rồi thêm đúng 1 dòng vào registry — không sửa gì khác trong hệ thống.
  */
-const registry: Record<string, BaseBuilder<any>> = {
+const registry: Record<string, BaseBuilder<unknown>> = {
   receipt: new ReceiptBuilder(),
   kitchen: new KitchenBuilder(),
   bill: new BillBuilder(),
@@ -20,7 +20,7 @@ const registry: Record<string, BaseBuilder<any>> = {
 };
 
 export class BuilderFactory {
-  static build(template: string, data: any): Buffer {
+  static build(template: string, data: unknown): Buffer {
     const builder = registry[template];
     if (!builder) throw new TemplateNotFoundError(template);
     return builder.build(data);

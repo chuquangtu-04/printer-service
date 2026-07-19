@@ -1,6 +1,7 @@
 import { PrinterManager } from '../manager/PrinterManager';
 import { SpoolerDriver } from '../drivers/SpoolerDriver';
 import { TestBuilder } from '../builders/TestBuilder';
+import printerConfig from '../../config/printerConfig';
 
 class PrinterService {
   manager: PrinterManager;
@@ -12,6 +13,15 @@ class PrinterService {
   async listPrinters() {
     const printers = await this.manager.discoverAll();
     return printers.map((p) => p.toJSON());
+  }
+
+  async getPrinterStatuses() {
+    const configuredPrinters = printerConfig.entries().map(([alias, printerName]) => ({
+      id: alias,
+      printerName,
+    }));
+
+    return this.manager.status(configuredPrinters);
   }
 
   async testPrint(printerId: string) {

@@ -16,6 +16,20 @@ class PrinterManager {
         const results = await Promise.all(this.drivers.map((driver) => driver.discover().catch(() => [])));
         return results.flat();
     }
+    async status(targets = []) {
+        if (targets.length > 0) {
+            const printers = await this.discoverAll();
+            return targets.map((target) => {
+                const printer = printers.find((p) => p.name === target.printerName || p.id === target.printerName);
+                return {
+                    id: target.id,
+                    status: printer?.status ?? 'offline',
+                };
+            });
+        }
+        const results = await Promise.all(this.drivers.map((driver) => driver.status().catch(() => [])));
+        return results.flat();
+    }
     /**
      * In test tới 1 máy in cụ thể.
      * printerId có thể match theo id (hash) hoặc theo tên hệ thống.

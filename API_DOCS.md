@@ -267,3 +267,31 @@ Invoke-RestMethod -Uri 'http://localhost:9000/api/print' `
   -Headers @{ 'Content-Type' = 'application/json' } `
   -Body $body
 ```
+
+---
+
+## 5. API Kiem tra trang thai may in (Printer Status - Phase 8)
+
+- **Endpoint:** `/api/printers/status`
+- **Method:** `GET`
+- **Mo ta:** Tra ve trang thai online/offline cua cac may in da cau hinh alias trong `src/storage/config/printers.json`.
+
+**Response mau:**
+```json
+[
+  {
+    "id": "kitchen",
+    "status": "online"
+  }
+]
+```
+
+**Cach goi (cURL):**
+```bash
+curl -X GET http://localhost:9000/api/printers/status
+```
+
+**Cach goi (PowerShell):**
+```powershell
+Invoke-RestMethod -Uri 'http://localhost:9000/api/printers/status' -Method Get
+```

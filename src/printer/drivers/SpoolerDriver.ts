@@ -3,8 +3,16 @@ import util from 'util';
 import os from 'os';
 import crypto from 'crypto';
 import { Printer } from '../models/Printer';
+import type { PrinterStatus } from '../manager/PrinterManager';
 
 const execAsync = util.promisify(exec);
+
+interface WindowsPrinterInfo {
+  Name: string;
+  PortName?: string;
+  Default?: boolean;
+  WorkOffline?: boolean;
+}
 
 export class SpoolerDriver {
   platform: NodeJS.Platform;
@@ -25,6 +33,14 @@ export class SpoolerDriver {
     }
   }
 
+  async status(): Promise<PrinterStatus[]> {
+    const printers = await this.discover();
+    return printers.map((printer) => ({
+      id: printer.name,
+      status: printer.status,
+    }));
+  }
+
   async _discoverWindows(): Promise<Printer[]> {
     try {
       const { stdout } = await execAsync(
@@ -32,16 +48,16 @@ export class SpoolerDriver {
         'Select-Object Name,PortName,Default,WorkOffline | ConvertTo-Json"'
       );
 
-      let raw = JSON.parse(stdout || '[]');
+      let raw = JSON.parse(stdout || '[]') as WindowsPrinterInfo | WindowsPrinterInfo[];
       if (!Array.isArray(raw)) raw = [raw]; // PS trả object đơn nếu chỉ có 1 máy in
 
-      return raw.map((p: any) => new Printer({
-        id: this._buildId(p.Name, p.PortName),
+      return raw.map((p) => new Printer({
+        id: this._buildId(p.Name, p.PortName ?? ''),
         name: p.Name,
         type: this._classifyPort(p.PortName),
         status: p.WorkOffline ? 'offline' : 'online',
         isDefault: !!p.Default,
-        port: p.PortName,
+        port: p.PortName ?? null,
       }));
     } catch {
       return [];

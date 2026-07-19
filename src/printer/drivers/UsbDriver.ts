@@ -13,6 +13,11 @@ const WINDOWS_EXIT_CODE_MESSAGE: Record<number, string> = {
   3: 'Loi khi gui du lieu toi may in',
 };
 
+interface ExecFileError extends Error {
+  code?: unknown;
+  stderr?: unknown;
+}
+
 /**
  * UsbDriver sends raw ESC/POS bytes to the target printer.
  * On Windows it delegates raw spooler writes to bin/printer.exe.
@@ -42,17 +47,15 @@ export class UsbDriver {
     await this._ensurePrinterExeExists();
 
     const tempFile = this._createTempRawPath();
-    console.log("Temp file path: ", tempFile)
     await fs.writeFile(tempFile, data);
-
-    console.log("printerExePath: ", this.printerExePath)
 
     try {
       await execFileAsync(this.printerExePath, [printerName, tempFile, 'Raw Print Job']);
-    } catch (err: any) {
-      const exitCode = typeof err.code === 'number' ? err.code : undefined;
+    } catch (err: unknown) {
+      const execError = err as ExecFileError;
+      const exitCode = typeof execError.code === 'number' ? execError.code : undefined;
       const reason = exitCode === undefined ? 'Khong xac dinh' : WINDOWS_EXIT_CODE_MESSAGE[exitCode] ?? 'Khong xac dinh';
-      const stderr = String(err.stderr ?? '').trim();
+      const stderr = String(execError.stderr ?? '').trim();
 
       throw new Error(
         `In that bai qua printer.exe${exitCode === undefined ? '' : ` (exit ${exitCode})`}: ${reason}${stderr ? ` - ${stderr}` : ''}`

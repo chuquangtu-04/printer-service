@@ -12,18 +12,16 @@ class PrintService {
     manager = new PrinterManager_1.PrinterManager([new SpoolerDriver_1.SpoolerDriver()]);
     async print(req) {
         const { printer: alias, template, data } = req;
-        // 1. Resolve alias -> tên máy in thật
         const realName = printerConfig_1.default.resolve(alias);
         if (!realName)
             throw new errors_1.PrinterAliasNotFoundError(alias);
-        // 2. Builder: dựng nội dung theo template
         const buffer = BuilderFactory_1.BuilderFactory.build(template, data);
-        // 3. PrinterManager: tìm máy in đang online + gửi qua Driver
         try {
             await this.manager.print(realName, buffer);
         }
         catch (err) {
-            if (err.message?.startsWith('Không tìm thấy máy in')) {
+            const message = err instanceof Error ? err.message : '';
+            if (message.startsWith('Không tìm thấy máy in') || message.startsWith('KhÃ´ng tÃ¬m tháº¥y mÃ¡y in')) {
                 throw new errors_1.PrinterNotFoundError(realName);
             }
             throw err;

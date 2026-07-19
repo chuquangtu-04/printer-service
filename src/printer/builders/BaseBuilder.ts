@@ -7,7 +7,7 @@ import { EscposCommands as C } from './EscposCommands';
  *  - Các helper dùng chung (validate, format tiền, canh lề...)
  * Builder con chỉ cần override renderBody(), và tuỳ chọn renderHeader()/renderFooter().
  */
-export abstract class BaseBuilder<TData = any> {
+export abstract class BaseBuilder<TData = unknown> {
   protected static readonly LINE_WIDTH = 32; // 32 ký tự cho khổ giấy 80mm phổ biến
 
   /** Entry point công khai — BuilderFactory chỉ gọi hàm này */

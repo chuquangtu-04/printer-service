@@ -5,7 +5,7 @@ interface PrinterOptions {
   status?: string;
   isDefault?: boolean;
   port?: string | null;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 export class Printer {
@@ -15,7 +15,7 @@ export class Printer {
   status: string;
   isDefault: boolean;
   port: string | null;
-  meta: Record<string, any>;
+  meta: Record<string, unknown>;
 
   constructor({ id, name, type, status = 'unknown', isDefault = false, port = null, meta = {} }: PrinterOptions) {
     this.id = id;

@@ -27,6 +27,10 @@ class PrinterConfig {
   resolve(alias: string): string | null {
     return this.aliasMap[alias] ?? null;
   }
+
+  entries(): Array<[string, string]> {
+    return Object.entries(this.aliasMap);
+  }
 }
 
 export default new PrinterConfig();

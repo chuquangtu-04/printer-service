@@ -9,9 +9,6 @@ const errors_1 = require("../../common/errors");
 async function print(req, res, next) {
     try {
         const { printer, template, data } = req.body ?? {};
-        console.log("Print: ", printer);
-        console.log("template: ", template);
-        console.log("printer: ", data);
         if (!printer || typeof printer !== 'string') {
             throw new errors_1.ValidationError('Thiếu hoặc sai kiểu field "printer"');
         }

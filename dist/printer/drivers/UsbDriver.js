@@ -46,9 +46,10 @@ class UsbDriver {
             await execFileAsync(this.printerExePath, [printerName, tempFile, 'Raw Print Job']);
         }
         catch (err) {
-            const exitCode = typeof err.code === 'number' ? err.code : undefined;
+            const execError = err;
+            const exitCode = typeof execError.code === 'number' ? execError.code : undefined;
             const reason = exitCode === undefined ? 'Khong xac dinh' : WINDOWS_EXIT_CODE_MESSAGE[exitCode] ?? 'Khong xac dinh';
-            const stderr = String(err.stderr ?? '').trim();
+            const stderr = String(execError.stderr ?? '').trim();
             throw new Error(`In that bai qua printer.exe${exitCode === undefined ? '' : ` (exit ${exitCode})`}: ${reason}${stderr ? ` - ${stderr}` : ''}`);
         }
         finally {

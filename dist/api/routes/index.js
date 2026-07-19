@@ -9,6 +9,7 @@ const router = (0, express_1.Router)();
 router.get('/health', healthController_1.checkHealth);
 // Printers
 router.get('/printers', printerController_1.getPrinters);
+router.get('/printers/status', printerController_1.getPrinterStatuses);
 router.post('/printers/test', printerController_1.testPrint);
 // Print
 router.post('/print', printController_1.print);
