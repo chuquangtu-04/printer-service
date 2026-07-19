@@ -15,7 +15,7 @@ class PrinterService {
   }
 
   async testPrint(printerId: string) {
-    const content = TestBuilder.buildBuffer();
+    const content = new TestBuilder().build(undefined);
     const target = await this.manager.print(printerId, content);
     return {
       success: true,

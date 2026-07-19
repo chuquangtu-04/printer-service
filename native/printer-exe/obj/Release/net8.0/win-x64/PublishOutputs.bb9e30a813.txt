@@ -1,0 +1,2 @@
+C:\Users\chuqu\OneDrive\Desktop\printer-service\bin\printer.pdb
+C:\Users\chuqu\OneDrive\Desktop\printer-service\bin\printer.exe

@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "build:printer": "dotnet publish native/printer-exe/PrinterExe.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o bin",
+    "build:all": "npm run build && npm run build:printer",
     "start": "tsx src/app.ts",
     "dev": "nodemon --watch \"src/**/*.ts\" --exec tsx src/app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
