@@ -295,3 +295,66 @@ curl -X GET http://localhost:9000/api/printers/status
 ```powershell
 Invoke-RestMethod -Uri 'http://localhost:9000/api/printers/status' -Method Get
 ```
+
+---
+
+## 6. API Quan ly hang doi in (Print Queue)
+
+Print queue giup moi may in xu ly job theo thu tu, tranh viec nhieu lenh in cung luc lam tron bill hoac mat job.
+Moi alias may in co queue rieng, nen `kitchen`, `bar`, `cashier` co the chay song song, nhung tung may in van in tuan tu.
+
+### Xem queue
+
+- **Endpoint:** `/api/queue`
+- **Method:** `GET`
+
+**Response mau:**
+```json
+[
+  {
+    "id": 1,
+    "status": "printing",
+    "printer": "kitchen",
+    "printerName": "EPSON_TM_T88V",
+    "template": "kitchen",
+    "attempts": 1,
+    "maxAttempts": 4,
+    "createdAt": "2026-07-19T12:00:00.000Z",
+    "updatedAt": "2026-07-19T12:00:01.000Z"
+  }
+]
+```
+
+```bash
+curl -X GET http://localhost:9000/api/queue
+```
+
+### Clear queue
+
+- **Endpoint:** `/api/queue`
+- **Method:** `DELETE`
+- **Mo ta:** Xoa cac job dang cho, da failed, da completed. Job dang `printing` khong bi huy giua chung.
+
+```bash
+curl -X DELETE http://localhost:9000/api/queue
+```
+
+### Retry job failed
+
+- **Endpoint:** `/api/queue/retry`
+- **Method:** `POST`
+- **Mo ta:** Neu truyen `id`, retry mot job failed. Neu khong truyen `id`, retry tat ca job failed.
+
+```bash
+curl -X POST http://localhost:9000/api/queue/retry \
+  -H "Content-Type: application/json" \
+  -d '{"id": 5}'
+```
+
+Retry tat ca job failed:
+
+```bash
+curl -X POST http://localhost:9000/api/queue/retry \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
