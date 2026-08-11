@@ -41,7 +41,7 @@ if (!gotTheLock) {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'icon.png');
+  const iconPath = path.join(__dirname, 'tray-icon.png');
   let icon: NativeImage;
 
   try {
@@ -53,7 +53,7 @@ function createTray() {
     icon = createFallbackIcon();
   }
 
-  icon = icon.resize({ width: 16, height: 16 });
+  icon = icon.resize({ width: 32, height: 32 });
   icon.setTemplateImage(false);
 
   tray = new Tray(icon);
@@ -92,4 +92,3 @@ function createFallbackIcon(): NativeImage {
     'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZSURBVDhPY2AYBYgHjBqA0QSMGkDBoAEAG54AGY+h7nQAAAAASUVORK5CYII=';
   return nativeImage.createFromBuffer(Buffer.from(base64Icon, 'base64'));
 }
-

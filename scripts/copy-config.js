@@ -18,8 +18,11 @@ for (const entry of fs.readdirSync(sourceDir)) {
   }
 }
 
-const trayIconPath = path.join(electronSourceDir, 'icon.png');
-if (fs.existsSync(trayIconPath)) {
+if (fs.existsSync(electronSourceDir)) {
   fs.mkdirSync(electronTargetDir, { recursive: true });
-  fs.copyFileSync(trayIconPath, path.join(electronTargetDir, 'icon.png'));
+  for (const entry of fs.readdirSync(electronSourceDir)) {
+    if (entry.endsWith('.png')) {
+      fs.copyFileSync(path.join(electronSourceDir, entry), path.join(electronTargetDir, entry));
+    }
+  }
 }
