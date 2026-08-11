@@ -2,6 +2,7 @@ import { execFile } from 'child_process';
 import util from 'util';
 import os from 'os';
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import { tmpdir } from 'os';
 
@@ -28,7 +29,20 @@ export class UsbDriver {
 
   constructor() {
     this.platform = os.platform();
-    this.printerExePath = path.join(__dirname, '../../../bin/printer.exe');
+    this.printerExePath = this._getPrinterExePath();
+  }
+
+  private _getPrinterExePath(): string {
+    const resourcesPath = (process as { resourcesPath?: string }).resourcesPath;
+    if (resourcesPath) {
+      const packagedPath = path.join(resourcesPath, 'bin', 'printer.exe');
+      if (existsSync(packagedPath)) return packagedPath;
+    }
+
+    const devPath = path.join(__dirname, '../../../bin/printer.exe');
+    if (existsSync(devPath)) return devPath;
+
+    return path.join(process.cwd(), 'bin', 'printer.exe');
   }
 
   async write(printerName: string, data: Buffer): Promise<void> {

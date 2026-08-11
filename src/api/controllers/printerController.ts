@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { printerService } from '@/printer/services/printerService';
+import { printerService } from '../../printer/services/printerService';
 
 const isPrinterNotFoundError = (err: unknown): err is Error => {
   if (!(err instanceof Error)) return false;
