@@ -1,5 +1,6 @@
 import { Printer } from '../models/Printer';
 import { UsbDriver } from '../drivers/UsbDriver';
+import { PrinterNotFoundError } from '../../common/errors';
 
 export interface PrinterStatus {
   id: string;
@@ -55,16 +56,12 @@ export class PrinterManager {
     return results.flat();
   }
 
-  /**
-   * In test tới 1 máy in cụ thể.
-   * printerId có thể match theo id (hash) hoặc theo tên hệ thống.
-   */
   async print(printerId: string, data: Buffer): Promise<{ id: string; name: string }> {
     const printers = await this.discoverAll();
     const target = printers.find((p) => p.id === printerId || p.name === printerId);
 
     if (!target) {
-      throw new Error(`Không tìm thấy máy in: ${printerId}`);
+      throw new PrinterNotFoundError(printerId);
     }
 
     await this.usbDriver.write(target.name, data);
@@ -72,3 +69,4 @@ export class PrinterManager {
     return { id: target.id, name: target.name };
   }
 }
+

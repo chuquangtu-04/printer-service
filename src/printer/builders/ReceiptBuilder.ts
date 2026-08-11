@@ -1,5 +1,6 @@
 import { BaseBuilder } from './BaseBuilder';
 import { EscposCommands as C } from './EscposCommands';
+import { ValidationError } from '../../common/errors';
 
 export interface ReceiptItem {
   name: string;
@@ -18,11 +19,12 @@ export interface ReceiptData {
 export class ReceiptBuilder extends BaseBuilder<ReceiptData> {
   protected validate(data: ReceiptData): void {
     if (!data || !Array.isArray(data.items) || data.items.length === 0) {
-      throw new Error('Dữ liệu hóa đơn không hợp lệ: thiếu "items"');
+      throw new ValidationError('Du lieu hoa don khong hop le: thieu "items"');
     }
+
     for (const item of data.items) {
       if (!item.name || typeof item.qty !== 'number' || typeof item.price !== 'number') {
-        throw new Error(`Item không hợp lệ: ${JSON.stringify(item)}`);
+        throw new ValidationError(`Item khong hop le: ${JSON.stringify(item)}`);
       }
     }
   }
@@ -67,3 +69,4 @@ export class ReceiptBuilder extends BaseBuilder<ReceiptData> {
     return Buffer.concat(parts);
   }
 }
+

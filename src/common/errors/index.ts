@@ -1,5 +1,6 @@
 export class AppError extends Error {
   statusCode: number;
+
   constructor(message: string, statusCode = 500) {
     super(message);
     this.statusCode = statusCode;
@@ -8,17 +9,26 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string) { super(message, 400); }
+  constructor(message: string) {
+    super(message, 400);
+  }
 }
 
 export class PrinterAliasNotFoundError extends AppError {
-  constructor(alias: string) { super(`Không tìm thấy cấu hình máy in cho alias: ${alias}`, 404); }
+  constructor(alias: string) {
+    super(`Khong tim thay cau hinh may in cho alias: ${alias}`, 404);
+  }
 }
 
 export class PrinterNotFoundError extends AppError {
-  constructor(name: string) { super(`Không tìm thấy máy in đang online: ${name}`, 404); }
+  constructor(name: string) {
+    super(`Khong tim thay may in dang online: ${name}`, 404);
+  }
 }
 
 export class TemplateNotFoundError extends AppError {
-  constructor(template: string) { super(`Không hỗ trợ template: ${template}`, 400); }
+  constructor(template: string) {
+    super(`Khong ho tro template: ${template}`, 400);
+  }
 }
+

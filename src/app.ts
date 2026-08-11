@@ -8,7 +8,7 @@ import routes from './api/routes';
 import { errorHandler } from './api/middleware/errorHandler';
 
 const app = express();
-const PORT = 9000;
+const PORT = Number(process.env.PORT ?? 9000);
 
 app.use(cors());
 app.use(express.json());

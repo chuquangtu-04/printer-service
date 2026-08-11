@@ -1,5 +1,6 @@
 import { BaseBuilder } from './BaseBuilder';
 import { EscposCommands as C } from './EscposCommands';
+import { ValidationError } from '../../common/errors';
 
 export interface LabelData {
   productName: string;
@@ -11,7 +12,7 @@ export interface LabelData {
 export class LabelBuilder extends BaseBuilder<LabelData> {
   protected validate(data: LabelData): void {
     if (!data || !data.productName) {
-      throw new Error('Dữ liệu tem nhãn không hợp lệ: thiếu "productName"');
+      throw new ValidationError('Du lieu tem nhan khong hop le: thieu "productName"');
     }
   }
 
@@ -21,13 +22,13 @@ export class LabelBuilder extends BaseBuilder<LabelData> {
 
   protected renderBody(data: LabelData): Buffer {
     const parts: Buffer[] = [];
-    
+
     parts.push(C.BOLD_ON, C.text(`${data.productName}\n`), C.BOLD_OFF);
-    
+
     if (data.price) {
       parts.push(C.text(`Gia: ${this.formatCurrency(data.price)}\n`));
     }
-    
+
     if (data.note) {
       parts.push(C.text(`Note: ${data.note}\n`));
     }
@@ -43,3 +44,4 @@ export class LabelBuilder extends BaseBuilder<LabelData> {
     return Buffer.concat([C.FEED(2), C.CUT]);
   }
 }
+

@@ -1,26 +1,28 @@
 import { BaseBuilder } from './BaseBuilder';
 import { EscposCommands as C } from './EscposCommands';
+import { ValidationError } from '../../common/errors';
 
 export interface KitchenItem {
   name: string;
   qty: number;
-  note?: string; // ghi chú riêng cho món, vd "không hành"
+  note?: string;
 }
 
 export interface KitchenData {
   orderId?: string;
-  table?: string;   // số bàn, nếu có
+  table?: string;
   items: KitchenItem[];
 }
 
 export class KitchenBuilder extends BaseBuilder<KitchenData> {
   protected validate(data: KitchenData): void {
     if (!data || !Array.isArray(data.items) || data.items.length === 0) {
-      throw new Error('Dữ liệu phiếu bếp không hợp lệ: thiếu "items"');
+      throw new ValidationError('Du lieu phieu bep khong hop le: thieu "items"');
     }
+
     for (const item of data.items) {
       if (!item.name || typeof item.qty !== 'number') {
-        throw new Error(`Item không hợp lệ: ${JSON.stringify(item)}`);
+        throw new ValidationError(`Item khong hop le: ${JSON.stringify(item)}`);
       }
     }
   }
@@ -41,7 +43,6 @@ export class KitchenBuilder extends BaseBuilder<KitchenData> {
   protected renderBody(data: KitchenData): Buffer {
     const parts: Buffer[] = [];
     for (const item of data.items) {
-      // chữ to cho tên món + số lượng, để đọc dễ từ xa trong bếp
       parts.push(C.DOUBLE_SIZE_ON, C.BOLD_ON);
       parts.push(C.text(`${item.qty}x ${item.name}\n`));
       parts.push(C.DOUBLE_SIZE_OFF, C.BOLD_OFF);
@@ -55,7 +56,7 @@ export class KitchenBuilder extends BaseBuilder<KitchenData> {
   }
 
   protected renderFooter(_data: KitchenData): Buffer {
-    // Phiếu bếp không cần feed nhiều, không cần "cảm ơn"
     return Buffer.concat([C.line('='), C.FEED(2), C.CUT]);
   }
 }
+

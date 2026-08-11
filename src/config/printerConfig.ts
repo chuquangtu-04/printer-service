@@ -5,7 +5,22 @@ interface PrinterAliasMap {
   [alias: string]: string;
 }
 
-const CONFIG_PATH = path.join(__dirname, '../storage/config/printers.json');
+const CONFIG_FILE = 'printers.json';
+
+function buildConfigCandidates(): string[] {
+  const candidates = [
+    path.join(__dirname, '../storage/config', CONFIG_FILE),
+    path.join(process.cwd(), 'dist/storage/config', CONFIG_FILE),
+    path.join(process.cwd(), 'src/storage/config', CONFIG_FILE),
+  ];
+
+  const resourcesPath = (process as { resourcesPath?: string }).resourcesPath;
+  if (resourcesPath) {
+    candidates.unshift(path.join(resourcesPath, 'storage/config', CONFIG_FILE));
+  }
+
+  return candidates;
+}
 
 class PrinterConfig {
   private aliasMap: PrinterAliasMap = {};
@@ -15,12 +30,17 @@ class PrinterConfig {
   }
 
   reload(): void {
-    try {
-      const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
-      this.aliasMap = JSON.parse(raw);
-    } catch {
-      this.aliasMap = {};
+    for (const configPath of buildConfigCandidates()) {
+      try {
+        const raw = fs.readFileSync(configPath, 'utf-8');
+        this.aliasMap = JSON.parse(raw);
+        return;
+      } catch {
+        // Try the next candidate path.
+      }
     }
+
+    this.aliasMap = {};
   }
 
   /** Trả về tên máy in thật trên hệ thống, ứng với alias logic (vd "cashier") */

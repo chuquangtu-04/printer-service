@@ -6,6 +6,8 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     res.status(err.statusCode).json({ success: false, message: err.message });
     return;
   }
+
   console.error(err);
-  res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
+  res.status(500).json({ success: false, message: 'Loi he thong' });
 }
+

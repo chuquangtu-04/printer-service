@@ -1,6 +1,15 @@
 export const ESC = 0x1b;
 export const GS = 0x1d;
 
+function normalizeEscposText(value: string): string {
+  return value
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x00-\x7F]/g, '?');
+}
+
 export const EscposCommands = {
   INIT: Buffer.from([ESC, 0x40]),
   BOLD_ON: Buffer.from([ESC, 0x45, 0x01]),
@@ -12,6 +21,6 @@ export const EscposCommands = {
   DOUBLE_SIZE_OFF: Buffer.from([GS, 0x21, 0x00]),
   CUT: Buffer.from([GS, 0x56, 0x00]),
   FEED: (lines = 1) => Buffer.from(Array(lines).fill(0x0a)),
-  text: (s: string) => Buffer.from(s, 'ascii'),
+  text: (s: string) => Buffer.from(normalizeEscposText(s), 'ascii'),
   line: (char = '-', width = 32) => Buffer.from(char.repeat(width) + '\n', 'ascii'),
 };
