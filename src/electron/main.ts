@@ -14,7 +14,6 @@ function log(msg: string) {
   console.log(msg);
 }
 
-// Enforce single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
@@ -34,7 +33,7 @@ if (!gotTheLock) {
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.stack || err.message : String(err);
       log(`FAILED to start Express server: ${errMsg}`);
-      dialog.showErrorBox('Printer Service Startup Error', `Không thể khởi chạy Express server:\n${errMsg}`);
+      dialog.showErrorBox('Printer Service Startup Error', `Khong the khoi chay Express server:\n${errMsg}`);
     }
 
     createTray();
@@ -54,27 +53,30 @@ function createTray() {
     icon = createFallbackIcon();
   }
 
+  icon = icon.resize({ width: 16, height: 16 });
+  icon.setTemplateImage(false);
+
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
     { label: 'NemoPOS Printer Service', enabled: false },
-    { label: 'Trạng thái: Running (Port 9000)', enabled: false },
+    { label: 'Trang thai: Running (Port 9000)', enabled: false },
     { type: 'separator' },
     {
-      label: 'Mở API Health Check',
+      label: 'Mo API Health Check',
       click: () => {
         shell.openExternal('http://localhost:9000/api/health');
       },
     },
     {
-      label: 'Xem danh sách máy in',
+      label: 'Xem danh sach may in',
       click: () => {
         shell.openExternal('http://localhost:9000/api/printers');
       },
     },
     { type: 'separator' },
     {
-      label: 'Thoát ứng dụng',
+      label: 'Thoat ung dung',
       click: () => {
         app.quit();
       },
@@ -90,3 +92,4 @@ function createFallbackIcon(): NativeImage {
     'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZSURBVDhPY2AYBYgHjBqA0QSMGkDBoAEAG54AGY+h7nQAAAAASUVORK5CYII=';
   return nativeImage.createFromBuffer(Buffer.from(base64Icon, 'base64'));
 }
+

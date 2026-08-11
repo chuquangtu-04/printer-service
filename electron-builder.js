@@ -10,10 +10,7 @@ module.exports = {
   forceCodeSigning: false,
   win: {
     target: ['nsis'],
-    sign: async function () {
-      return true;
-    },
-    verifyUpdateCodeSignature: false,
+    icon: 'build/icon.ico',
   },
   nsis: {
     oneClick: false,

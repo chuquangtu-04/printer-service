@@ -1,7 +1,9 @@
 node_modules/
 dist/
 release/
+native/printer-exe/bin/
+native/printer-exe/obj/
+bin/*.pdb
 
 *.log
 *.tmp
-
