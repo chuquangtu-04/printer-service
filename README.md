@@ -91,6 +91,38 @@ You can also import:
 postman_collection.json
 ```
 
+## Frontend SDK
+
+Frontend apps should use the SDK wrapper instead of calling `fetch('http://localhost:9000/api/...')` directly throughout the codebase.
+
+SDK source repo:
+
+```text
+D:\printer-sdk
+```
+
+During local development, install it in your frontend app with:
+
+```bash
+npm install D:\printer-sdk
+```
+
+Example:
+
+```ts
+import { PrinterSDK } from '@nemo/printer-sdk';
+
+const printer = new PrinterSDK();
+const printers = await printer.getPrinters();
+
+await printer.printKitchen(printers[0].id, {
+  language: 'vi',
+  table: '208',
+  orderId: 'ORD001',
+  items: [{ name: 'Pho bo', qty: 1 }],
+});
+```
+
 ## Build TypeScript
 
 ```bash
