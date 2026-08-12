@@ -14,12 +14,6 @@ export class ValidationError extends AppError {
   }
 }
 
-export class PrinterAliasNotFoundError extends AppError {
-  constructor(alias: string) {
-    super(`Khong tim thay cau hinh may in cho alias: ${alias}`, 404);
-  }
-}
-
 export class PrinterNotFoundError extends AppError {
   constructor(name: string) {
     super(`Khong tim thay may in dang online: ${name}`, 404);
@@ -31,4 +25,3 @@ export class TemplateNotFoundError extends AppError {
     super(`Khong ho tro template: ${template}`, 400);
   }
 }
-

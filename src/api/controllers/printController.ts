@@ -7,13 +7,13 @@ export async function print(req: Request, res: Response, next: NextFunction) {
     const { printer, template, data } = req.body ?? {};
 
     if (!printer || typeof printer !== 'string') {
-      throw new ValidationError('Thiếu hoặc sai kiểu field "printer"');
+      throw new ValidationError('Thieu hoac sai kieu field "printer"');
     }
     if (!template || typeof template !== 'string') {
-      throw new ValidationError('Thiếu hoặc sai kiểu field "template"');
+      throw new ValidationError('Thieu hoac sai kieu field "template"');
     }
     if (data === undefined || typeof data !== 'object') {
-      throw new ValidationError('Thiếu hoặc sai kiểu field "data"');
+      throw new ValidationError('Thieu hoac sai kieu field "data"');
     }
 
     const result = await printService.print({ printer, template, data });
@@ -22,3 +22,4 @@ export async function print(req: Request, res: Response, next: NextFunction) {
     next(err);
   }
 }
+

@@ -1,8 +1,6 @@
 import { PrinterManager } from '../manager/PrinterManager';
 import { SpoolerDriver } from '../drivers/SpoolerDriver';
 import { BuilderFactory } from '../builders/BuilderFactory';
-import printerConfig from '../../config/printerConfig';
-import { PrinterAliasNotFoundError } from '../../common/errors';
 import { QueueManager } from '../queue/QueueManager';
 import { QueueRepository } from '../queue/QueueRepository';
 import { RetryPolicy } from '../queue/RetryPolicy';
@@ -25,21 +23,18 @@ class PrintService {
   );
 
   async print(req: PrintRequest): Promise<{ success: true; message: string; job: PrintJobSnapshot }> {
-    const { printer: alias, template, data } = req;
-
-    const realName = printerConfig.resolve(alias);
-    if (!realName) throw new PrinterAliasNotFoundError(alias);
+    const { printer, template, data } = req;
 
     const buffer = BuilderFactory.build(template, data);
     const job = this.queueManager.add({
-      queueKey: alias,
-      printer: alias,
-      printerName: realName,
+      queueKey: printer,
+      printer,
+      printerName: printer,
       template,
       buffer,
     });
 
-    return { success: true, message: `Da them lenh in vao queue "${alias}" (${realName})`, job };
+    return { success: true, message: `Da them lenh in vao queue "${printer}"`, job };
   }
 
   listQueue(): PrintJobSnapshot[] {
@@ -56,3 +51,4 @@ class PrintService {
 }
 
 export default new PrintService();
+

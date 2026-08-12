@@ -10,15 +10,6 @@ export const getPrinters = async (_req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const getPrinterStatuses = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const statuses = await printerService.getPrinterStatuses();
-    res.json(statuses);
-  } catch (err) {
-    next(err);
-  }
-};
-
 export const testPrint = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { printerId } = req.body;

@@ -1,0 +1,206 @@
+{
+  "info": {
+    "name": "NemoPOS Printer Service",
+    "_postman_id": "6d6d2f0a-9a0c-4c31-9f7f-printer-service",
+    "description": "Postman collection for testing the local NemoPOS Printer Service API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9000",
+      "type": "string"
+    },
+    {
+      "key": "printerId",
+      "value": "XP-80C",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Check whether the printer service is running."
+      }
+    },
+    {
+      "name": "Get Printers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/printers",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "printers"]
+        },
+        "description": "List printers detected by the local machine. Use a returned printer name or id as printerId."
+      }
+    },
+    {
+      "name": "Test Print",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"printerId\": \"{{printerId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/printers/test",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "printers", "test"]
+        },
+        "description": "Send a test print to a printer by printer id or system printer name."
+      }
+    },
+    {
+      "name": "Print Receipt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"printer\": \"{{printerId}}\",\n  \"template\": \"receipt\",\n  \"data\": {\n    \"storeName\": \"CUA HANG TEST\",\n    \"orderId\": \"DH001\",\n    \"items\": [\n      { \"name\": \"Ca phe sua\", \"qty\": 2, \"price\": 25000 },\n      { \"name\": \"Banh mi\", \"qty\": 1, \"price\": 15000 }\n    ],\n    \"note\": \"Cam on quy khach\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/print",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "print"]
+        },
+        "description": "Print a receipt directly to the selected printer id or printer name."
+      }
+    },
+    {
+      "name": "Print Kitchen Ticket",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"printer\": \"{{printerId}}\",\n  \"template\": \"kitchen\",\n  \"data\": {\n    \"table\": \"05\",\n    \"orderId\": \"DH001\",\n    \"items\": [\n      { \"name\": \"Pho bo\", \"qty\": 2, \"note\": \"khong hanh\" },\n      { \"name\": \"Goi cuon\", \"qty\": 1 }\n    ]\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/print",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "print"]
+        },
+        "description": "Print a kitchen ticket directly to the selected printer id or printer name."
+      }
+    },
+    {
+      "name": "Print Bill",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"printer\": \"{{printerId}}\",\n  \"template\": \"bill\",\n  \"data\": {\n    \"storeName\": \"CUA HANG TEST\",\n    \"table\": \"05\",\n    \"items\": [\n      { \"name\": \"Pho bo\", \"qty\": 2, \"price\": 45000 },\n      { \"name\": \"Goi cuon\", \"qty\": 1, \"price\": 15000 }\n    ],\n    \"discount\": 5000,\n    \"tax\": 10000\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/print",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "print"]
+        },
+        "description": "Print a temporary bill directly to the selected printer id or printer name."
+      }
+    },
+    {
+      "name": "Print Label",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"printer\": \"{{printerId}}\",\n  \"template\": \"label\",\n  \"data\": {\n    \"productName\": \"Tra Sua Tran Chau\",\n    \"price\": 35000,\n    \"note\": \"It da, 50% duong\",\n    \"barcode\": \"893123456789\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/print",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "print"]
+        },
+        "description": "Print a product label directly to the selected printer id or printer name."
+      }
+    },
+    {
+      "name": "Get Queue",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/queue",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "queue"]
+        },
+        "description": "List print jobs in memory."
+      }
+    },
+    {
+      "name": "Retry Failed Queue",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/queue/retry",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "queue", "retry"]
+        },
+        "description": "Retry all failed jobs. Add { \"id\": 5 } to retry one job."
+      }
+    },
+    {
+      "name": "Clear Queue",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/queue",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "queue"]
+        },
+        "description": "Clear queued, completed, and failed jobs. Printing jobs are kept."
+      }
+    }
+  ]
+}

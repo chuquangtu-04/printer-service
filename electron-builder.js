@@ -25,11 +25,6 @@ module.exports = {
       to: 'bin/',
       filter: ['**/*'],
     },
-    {
-      from: 'src/storage/config/',
-      to: 'storage/config/',
-      filter: ['*.json'],
-    },
   ],
   files: ['dist/**/*', 'package.json'],
 };
