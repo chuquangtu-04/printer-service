@@ -1,5 +1,6 @@
 import { PrinterManager } from '../manager/PrinterManager';
 import { SpoolerDriver } from '../drivers/SpoolerDriver';
+import { ConfiguredPrinterDriver } from '../drivers/ConfiguredPrinterDriver';
 import { BuilderFactory } from '../builders/BuilderFactory';
 import { QueueManager } from '../queue/QueueManager';
 import { QueueRepository } from '../queue/QueueRepository';
@@ -13,7 +14,7 @@ interface PrintRequest {
 }
 
 class PrintService {
-  private manager = new PrinterManager([new SpoolerDriver()]);
+  private manager = new PrinterManager([new ConfiguredPrinterDriver(), new SpoolerDriver()]);
   private queueManager = new QueueManager(
     new QueueRepository(),
     new RetryPolicy(),
@@ -25,7 +26,7 @@ class PrintService {
   async print(req: PrintRequest): Promise<{ success: true; message: string; job: PrintJobSnapshot }> {
     const { printer, template, data } = req;
 
-    const buffer = BuilderFactory.build(template, data);
+    const buffer = await BuilderFactory.build(template, data);
     const job = this.queueManager.add({
       queueKey: printer,
       printer,
@@ -51,4 +52,3 @@ class PrintService {
 }
 
 export default new PrintService();
-

@@ -1,6 +1,15 @@
 export const ESC = 0x1b;
 export const GS = 0x1d;
 
+type QrErrorCorrection = 'L' | 'M' | 'Q' | 'H';
+
+const QR_ERROR_CORRECTION: Record<QrErrorCorrection, number> = {
+  L: 0x30,
+  M: 0x31,
+  Q: 0x32,
+  H: 0x33,
+};
+
 function normalizeEscposText(value: string): string {
   return value
     .replace(/đ/g, 'd')
@@ -34,8 +43,8 @@ export const EscposCommands = {
       Buffer.from('\n', 'ascii'),
     ]);
   },
-  qrcode: (value: string, size = 6) => {
-    const data = Buffer.from(normalizeEscposText(value), 'ascii');
+  qrcode: (value: string, size = 7, errorCorrection: QrErrorCorrection = 'Q') => {
+    const data = Buffer.from(value, 'utf8');
     const storeLength = data.length + 3;
     const pL = storeLength % 256;
     const pH = Math.floor(storeLength / 256);
@@ -43,7 +52,7 @@ export const EscposCommands = {
     return Buffer.concat([
       Buffer.from([GS, 0x28, 0x6b, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]),
       Buffer.from([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, size]),
-      Buffer.from([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x31]),
+      Buffer.from([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, QR_ERROR_CORRECTION[errorCorrection]]),
       Buffer.from([GS, 0x28, 0x6b, pL, pH, 0x31, 0x50, 0x30]),
       data,
       Buffer.from([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30]),

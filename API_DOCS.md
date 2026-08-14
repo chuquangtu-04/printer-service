@@ -6,6 +6,31 @@ Base URL mac dinh: `http://localhost:9000`
 
 ---
 
+## 0. Hai cach ket noi may in
+
+Printer Service hien ho tro 2 cach ket noi:
+
+| Cach ket noi | Khi nao dung | Cach service in |
+| --- | --- | --- |
+| USB/Windows printer | May in cam USB vao may tinh, hoac may in da duoc add vao Windows | In qua Windows printer name bang `bin/printer.exe`. |
+| LAN/TCP printer | May in cam day mang vao router, POS/may tinh cung mang Wi-Fi/LAN | In truc tiep ESC/POS toi IP may in qua TCP port `9100`. |
+
+Ca 2 cach deu dung chung API:
+
+```text
+GET  /api/printers
+POST /api/printers/test
+POST /api/print
+GET  /api/queue
+```
+
+Khac nhau duy nhat la gia tri field `printer`:
+
+- USB/Windows: dung `id` hoac `name` cua may in Windows, vi du `XP-T80A`.
+- LAN/TCP: dung alias trong config, vi du `kitchen-01`, khong truyen IP tu POS.
+
+---
+
 ## 1. Health Check
 
 Dung de kiem tra app/service da chay va server API co phan hoi hay chua.
@@ -25,7 +50,12 @@ Invoke-RestMethod -Uri 'http://localhost:9000/api/health' -Method Get
 
 ## 2. Lay danh sach may in
 
-API nay doc danh sach may in tu Windows. POS/app goi API nay de hien thi danh sach cho nguoi dung chon may in.
+API nay doc danh sach may in tu 2 nguon:
+
+- `config/printers.json`: may in LAN/TCP hoac alias USB cau hinh co dinh cho tung nha hang.
+- Windows printers: may in da duoc cai vao Windows.
+
+POS/app goi API nay de hien thi danh sach cho nguoi dung chon may in.
 
 - **Endpoint:** `/api/printers`
 - **Method:** `GET`
@@ -50,6 +80,193 @@ Invoke-RestMethod -Uri 'http://localhost:9000/api/printers' -Method Get
 2. Nguoi dung chon may in tren giao dien POS.
 3. POS luu lai `id` hoac `name` cua may in da chon.
 4. Khi can in, POS truyen gia tri do vao field `printer` cua API `/api/print`.
+
+---
+
+## 2.1 Ket noi USB/Windows printer
+
+Dung cho may in cam USB truc tiep vao may tinh, hoac bat ky may in nao da duoc Windows nhan trong danh sach Printers.
+
+### Dieu kien
+
+- May in da cam USB vao may tinh.
+- Windows da cai driver va thay may in trong `Settings -> Bluetooth & devices -> Printers & scanners`.
+- `bin/printer.exe` ton tai. Neu chua co, chay:
+
+```bash
+npm.cmd run build:printer
+```
+
+### Cach test
+
+1. Chay service:
+
+```bash
+npm.cmd run dev
+```
+
+2. Lay danh sach may in:
+
+```text
+GET http://localhost:9000/api/printers
+```
+
+3. Tim may in USB, vi du:
+
+```json
+{
+  "id": "prn_xxxxx",
+  "name": "XP-T80A",
+  "type": "USB",
+  "status": "online",
+  "isDefault": false
+}
+```
+
+4. Test in:
+
+```json
+{
+  "printerId": "XP-T80A"
+}
+```
+
+Gui toi:
+
+```text
+POST http://localhost:9000/api/printers/test
+```
+
+5. Khi goi `/api/print`, truyen:
+
+```json
+{
+  "printer": "XP-T80A",
+  "template": "receipt"
+}
+```
+
+Luu y: voi cach USB/Windows, khong can sua `config/printers.json`.
+
+---
+
+## 2.2 Ket noi LAN/TCP printer
+
+Dung khi may in cam day mang vao router/switch, may tinh POS ket noi cung mang Wi-Fi/LAN, va may in ho tro raw ESC/POS qua TCP port `9100`.
+
+Mo hinh:
+
+```text
+POS/may tinh -- Wi-Fi/LAN -- Router/Switch -- day mang -- May in
+```
+
+POS khong truyen IP may in vao API. IP duoc IT cau hinh mot lan trong `config/printers.json`.
+
+### Dieu kien
+
+- May in co IP noi bo, vi du `192.168.100.100`.
+- May tinh chay Printer Service ping duoc IP may in.
+- Cong TCP `9100` cua may in mo.
+- May in ho tro ESC/POS raw qua network.
+
+### File config
+
+File cau hinh local/dev:
+
+```text
+config/printers.json
+```
+
+Production Windows:
+
+```text
+C:\ProgramData\NemoPrinter\config\printers.json
+```
+
+Co the override bang bien moi truong:
+
+```text
+PRINTER_CONFIG_PATH
+```
+
+Vi du cau hinh may in bep LAN:
+
+```json
+{
+  "printers": [
+    {
+      "id": "kitchen-01",
+      "name": "May in bep",
+      "connection": {
+        "type": "tcp",
+        "host": "192.168.100.100",
+        "port": 9100
+      },
+      "enabled": true
+    }
+  ]
+}
+```
+
+### Cach test
+
+1. Sua `host` dung IP may in.
+2. Dat `enabled` la `true`.
+3. Restart Printer Service.
+4. Goi:
+
+```text
+GET http://localhost:9000/api/printers
+```
+
+Neu cau hinh dung, se thay:
+
+```json
+{
+  "id": "kitchen-01",
+  "name": "May in bep",
+  "type": "NETWORK",
+  "status": "unknown",
+  "isDefault": false
+}
+```
+
+5. Test in:
+
+```text
+POST http://localhost:9000/api/printers/kitchen-01/test
+```
+
+Hoac dung endpoint cu:
+
+```json
+{
+  "printerId": "kitchen-01"
+}
+```
+
+Gui toi:
+
+```text
+POST http://localhost:9000/api/printers/test
+```
+
+6. Khi goi `/api/print`, truyen alias:
+
+```json
+{
+  "printer": "kitchen-01",
+  "template": "kitchen",
+  "data": {
+    "table": "B05",
+    "items": [
+      { "name": "Pho bo", "qty": 2 }
+    ]
+  }
+}
+```
+
+Luu y: voi LAN/TCP, khong can add may in vao Windows. Service gui ESC/POS truc tiep toi `host:port`.
 
 ---
 
@@ -80,7 +297,18 @@ Invoke-RestMethod -Uri 'http://localhost:9000/api/printers/test' `
   -Body '{"printerId": "XP-80C"}'
 ```
 
----
+Neu dung printer id da cau hinh trong `config/printers.json`, co the test truc tiep bang URL:
+
+- **Endpoint:** `/api/printers/:printerId/test`
+- **Method:** `POST`
+
+```bash
+curl -X POST http://localhost:9000/api/printers/kitchen-01/test
+```
+
+```powershell
+Invoke-RestMethod -Uri 'http://localhost:9000/api/printers/kitchen-01/test' -Method Post
+```
 
 ## 4. In theo template
 

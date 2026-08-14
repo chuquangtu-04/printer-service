@@ -1,5 +1,6 @@
 import { BaseBuilder } from './BaseBuilder';
 import { EscposCommands as C } from './EscposCommands';
+import { imageUrlToRasterCommand } from './EscposImage';
 import { ValidationError } from '../../common/errors';
 
 type BarcodeType = 'CODE128';
@@ -97,29 +98,27 @@ export class ReceiptBuilder extends BaseBuilder<ReceiptData | LegacyReceiptData>
 
   protected renderHeader(data: ReceiptData | LegacyReceiptData): Buffer {
     const receipt = this.normalize(data);
-    const parts: Buffer[] = [C.INIT, C.ALIGN_CENTER];
+    const parts: Buffer[] = [C.INIT, C.FEED(1), C.ALIGN_CENTER];
 
     if (receipt.header?.store_name) {
-      parts.push(C.BOLD_ON, C.DOUBLE_SIZE_ON, C.text(`${receipt.header.store_name}\n`), C.DOUBLE_SIZE_OFF, C.BOLD_OFF);
+      parts.push(C.BOLD_ON, C.text(`${receipt.header.store_name}\n`), C.BOLD_OFF);
     }
     if (receipt.branch_name) parts.push(C.text(`${receipt.branch_name}\n`));
     if (receipt.header?.address) parts.push(C.text(`${receipt.header.address}\n`));
     if (receipt.header?.phone) parts.push(C.text(`${receipt.header.phone}\n`));
 
-    parts.push(C.FEED(1), C.BOLD_ON, C.DOUBLE_SIZE_ON);
+    parts.push(C.FEED(1), C.BOLD_ON);
     parts.push(C.text(`${receipt.invoice?.title ?? 'HOA DON BAN HANG'}\n`));
-    parts.push(C.DOUBLE_SIZE_OFF, C.BOLD_OFF);
+    parts.push(C.BOLD_OFF);
 
     const barcode = receipt.invoice?.barcode;
     if (barcode?.value) {
       if (barcode.type && barcode.type !== 'CODE128') {
         throw new ValidationError(`Khong ho tro barcode type: ${barcode.type}`);
       }
-      parts.push(C.barcodeCode128(barcode.value));
-      parts.push(C.BOLD_ON, C.text(`${barcode.value}\n`), C.BOLD_OFF);
+      parts.push(C.barcodeCode128(barcode.value, 56, 2));
     }
 
-    if (receipt.invoice?.created_at) parts.push(C.text(`${receipt.invoice.created_at}\n`));
     parts.push(C.FEED(1), C.ALIGN_LEFT);
 
     return Buffer.concat(parts);
@@ -152,17 +151,19 @@ export class ReceiptBuilder extends BaseBuilder<ReceiptData | LegacyReceiptData>
     return Buffer.concat(parts);
   }
 
-  protected renderFooter(data: ReceiptData | LegacyReceiptData): Buffer {
+  protected async renderFooter(data: ReceiptData | LegacyReceiptData): Promise<Buffer> {
     const receipt = this.normalize(data);
     const parts: Buffer[] = [C.line('-', LINE_WIDTH), C.ALIGN_CENTER];
 
     if (receipt.invoice?.qrcode?.value) {
-      parts.push(C.qrcode(receipt.invoice.qrcode.value));
+      const qrcodeValue = receipt.invoice.qrcode.value.trim();
+      parts.push(C.BOLD_OFF, C.DOUBLE_SIZE_OFF, C.FEED(2));
+      parts.push(await this.renderQrCode(qrcodeValue));
+      parts.push(C.FEED(3));
     }
 
-    parts.push(C.FEED(1));
     parts.push(C.text(receipt.note ?? 'Cam on Quy khach!\nHen gap lai!\n'));
-    parts.push(C.FEED(3), C.CUT);
+    parts.push(C.FEED(6), C.CUT);
 
     return Buffer.concat(parts);
   }
@@ -172,10 +173,23 @@ export class ReceiptBuilder extends BaseBuilder<ReceiptData | LegacyReceiptData>
     const parts: Buffer[] = [];
 
     if (invoice.code) parts.push(C.text(this.rowLine('Ma hoa don:', invoice.code)));
+    if (invoice.created_at) parts.push(C.text(this.rowLine('Thoi gian:', invoice.created_at)));
     if (invoice.customer) parts.push(C.text(this.rowLine('Khach hang:', invoice.customer)));
     if (invoice.seller) parts.push(C.text(this.rowLine('Nguoi ban:', invoice.seller)));
 
     return parts;
+  }
+
+  private async renderQrCode(value: string): Promise<Buffer> {
+    if (this.isPngImageUrl(value)) {
+      return imageUrlToRasterCommand(value, 260);
+    }
+
+    return C.qrcode(value, 6, 'M');
+  }
+
+  private isPngImageUrl(value: string): boolean {
+    return /^https?:\/\/.+\.png(?:[?#].*)?$/i.test(value);
   }
 
   private renderItem(item: ReceiptItem): Buffer[] {

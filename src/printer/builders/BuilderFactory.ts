@@ -20,7 +20,7 @@ const registry: Record<string, BaseBuilder<unknown>> = {
 };
 
 export class BuilderFactory {
-  static build(template: string, data: unknown): Buffer {
+  static build(template: string, data: unknown): Promise<Buffer> {
     const builder = registry[template];
     if (!builder) throw new TemplateNotFoundError(template);
     return builder.build(data);

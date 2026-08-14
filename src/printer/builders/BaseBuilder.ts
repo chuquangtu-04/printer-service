@@ -1,5 +1,7 @@
 import { EscposCommands as C } from './EscposCommands';
 
+type MaybePromise<T> = T | Promise<T>;
+
 /**
  * Mọi Builder phải implement build(data) -> Buffer.
  * BaseBuilder cung cấp:
@@ -11,12 +13,12 @@ export abstract class BaseBuilder<TData = unknown> {
   protected static readonly LINE_WIDTH = 32; // 32 ký tự cho khổ giấy 80mm phổ biến
 
   /** Entry point công khai — BuilderFactory chỉ gọi hàm này */
-  build(data: TData): Buffer {
+  async build(data: TData): Promise<Buffer> {
     this.validate(data);
     return Buffer.concat([
-      this.renderHeader(data),
-      this.renderBody(data),
-      this.renderFooter(data),
+      await this.renderHeader(data),
+      await this.renderBody(data),
+      await this.renderFooter(data),
     ]);
   }
 
@@ -24,15 +26,15 @@ export abstract class BaseBuilder<TData = unknown> {
   protected abstract validate(data: TData): void;
 
   /** Phần thân chính — bắt buộc mỗi builder tự định nghĩa */
-  protected abstract renderBody(data: TData): Buffer;
+  protected abstract renderBody(data: TData): MaybePromise<Buffer>;
 
   /** Header mặc định: init máy in. Builder con có thể override thêm */
-  protected renderHeader(_data: TData): Buffer {
+  protected renderHeader(_data: TData): MaybePromise<Buffer> {
     return C.INIT;
   }
 
   /** Footer mặc định: feed giấy + cắt. Builder con có thể override */
-  protected renderFooter(_data: TData): Buffer {
+  protected renderFooter(_data: TData): MaybePromise<Buffer> {
     return Buffer.concat([C.FEED(3), C.CUT]);
   }
 

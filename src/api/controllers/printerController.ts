@@ -25,3 +25,17 @@ export const testPrint = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+export const testPrintById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { printerId } = req.params;
+    if (!printerId || typeof printerId !== 'string') {
+      res.status(400).json({ success: false, message: 'Thieu printerId' });
+      return;
+    }
+
+    const result = await printerService.testPrint(printerId);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};

@@ -1,13 +1,13 @@
 # NemoPOS Printer Service
 
-Local Windows printer service for NemoPOS. The app exposes HTTP APIs on port `9000`, builds ESC/POS print buffers, queues print jobs, and sends raw print data to Windows printers.
+Local Windows printer service for NemoPOS. The app exposes HTTP APIs on port `9000`, builds ESC/POS print buffers, queues print jobs, and sends raw print data to Windows printers or configured LAN printers over TCP.
 
 ## Requirements
 
 - Windows
 - Node.js and npm
 - .NET SDK, only needed when rebuilding `bin/printer.exe`
-- A Windows printer installed and visible in Control Panel / Printers
+- A Windows printer installed and visible in Control Panel / Printers, or a LAN thermal printer reachable by IP/port `9100`
 
 ## Install From Source
 
@@ -54,6 +54,100 @@ curl http://localhost:9000/api/printers
 ```
 
 Use a returned printer `id` or `name` as the `printer` value when calling `/api/print`.
+
+## LAN Printer Config
+
+Printer Service supports two connection modes.
+
+### USB/Windows Printer
+
+Use this when the printer is plugged into the computer by USB, or when the printer has already been added to Windows.
+
+Setup:
+
+1. Install the printer driver in Windows.
+2. Confirm the printer appears in `Settings -> Bluetooth & devices -> Printers & scanners`.
+3. Start the service.
+4. Call:
+
+```bash
+curl http://localhost:9000/api/printers
+```
+
+5. Use the returned printer `name` or `id` when printing.
+
+Example:
+
+```json
+{
+  "printer": "XP-T80A",
+  "template": "receipt"
+}
+```
+
+USB/Windows mode does not require `config/printers.json`.
+
+### LAN/TCP Printer
+
+Use this when the printer is connected to the router/switch by network cable, and the POS computer is on the same LAN/Wi-Fi.
+
+For a network thermal printer, edit:
+
+```text
+config/printers.json
+```
+
+In production on Windows, the service also supports:
+
+```text
+C:\ProgramData\NemoPrinter\config\printers.json
+```
+
+You can override the path with `PRINTER_CONFIG_PATH`.
+
+Example:
+
+```json
+{
+  "printers": [
+    {
+      "id": "kitchen-01",
+      "name": "May in bep",
+      "connection": {
+        "type": "tcp",
+        "host": "192.168.100.100",
+        "port": 9100
+      },
+      "enabled": true
+    }
+  ]
+}
+```
+
+Restart the service after changing this file, then test:
+
+```bash
+curl -X POST http://localhost:9000/api/printers/kitchen-01/test
+```
+
+When printing from NemoPOS, send `printer: "kitchen-01"` instead of sending the printer IP.
+
+Example:
+
+```json
+{
+  "printer": "kitchen-01",
+  "template": "kitchen",
+  "data": {
+    "table": "B05",
+    "items": [
+      { "name": "Pho bo", "qty": 2 }
+    ]
+  }
+}
+```
+
+LAN/TCP mode does not require adding the printer to Windows.
 
 ## Test Print API
 

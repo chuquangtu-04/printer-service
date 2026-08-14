@@ -15,6 +15,16 @@
       "key": "printerId",
       "value": "XP-80C",
       "type": "string"
+    },
+    {
+      "key": "lanPrinterId",
+      "value": "kitchen-01",
+      "type": "string"
+    },
+    {
+      "key": "paymentQrUrl",
+      "value": "http://s3.tppos.vn/nhahangha/company/payment_qr_1786680986981.png",
+      "type": "string"
     }
   ],
   "item": [
@@ -65,6 +75,117 @@
         },
         "description": "Send a test print to a printer by printer id or system printer name."
       }
+    },
+    {
+      "name": "LAN Printer",
+      "item": [
+        {
+          "name": "LAN - Get Printers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/printers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "printers"]
+            },
+            "description": "Check whether printers from config/printers.json are loaded. You should see {{lanPrinterId}} when it is enabled."
+          }
+        },
+        {
+          "name": "LAN - Test Print By URL",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/printers/{{lanPrinterId}}/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "printers", "{{lanPrinterId}}", "test"]
+            },
+            "description": "Send a test print to the LAN printer alias from config/printers.json."
+          }
+        },
+        {
+          "name": "LAN - Test Print By Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"printerId\": \"{{lanPrinterId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/printers/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "printers", "test"]
+            },
+            "description": "Same LAN test print using the old /api/printers/test endpoint."
+          }
+        },
+        {
+          "name": "LAN - Print Kitchen Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"printer\": \"{{lanPrinterId}}\",\n  \"template\": \"kitchen\",\n  \"data\": {\n    \"language\": \"vi\",\n    \"table\": \"B05\",\n    \"orderId\": \"ORD-LAN-001\",\n    \"orderNote\": \"Test in qua LAN\",\n    \"items\": [\n      { \"name\": \"Pho bo\", \"qty\": 2, \"note\": \"Khong hanh\" },\n      { \"name\": \"Tra da\", \"qty\": 1 }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/print",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "print"]
+            },
+            "description": "Print a kitchen ticket through the configured LAN printer."
+          }
+        },
+        {
+          "name": "LAN - Print Receipt Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"template\": \"receipt\",\n  \"printer\": \"{{lanPrinterId}}\",\n  \"header\": {\n    \"store_name\": \"Nguyen Van Muoi\",\n    \"address\": \"269 Nguyen Van Huyen\",\n    \"phone\": \"01234567899888\"\n  },\n  \"branch_name\": \"main-branch\",\n  \"invoice\": {\n    \"title\": \"HOA DON BAN HANG\",\n    \"barcode\": {\n      \"type\": \"CODE128\",\n      \"value\": \"SAL-FYE-FC6F9A\"\n    },\n    \"qrcode\": {\n      \"value\": \"{{paymentQrUrl}}\"\n    },\n    \"code\": \"SAL-FYE-FC6F9A\",\n    \"created_at\": \"13/08/2026 16:36:09\",\n    \"customer\": \"Khach Le\",\n    \"seller\": \"0123456789\"\n  },\n  \"items\": [\n    {\n      \"name\": \"Cai bo thom\",\n      \"quantity\": 1,\n      \"unit_price\": 62000,\n      \"discount\": 50000,\n      \"amount\": 12000\n    }\n  ],\n  \"summary\": {\n    \"subtotal\": 12000,\n    \"discount\": 1200,\n    \"voucher\": 0,\n    \"points\": 10000,\n    \"tax\": 1377.34,\n    \"total\": 800\n  },\n  \"payment\": {\n    \"method\": \"cash\",\n    \"amount\": 800\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/print",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "print"]
+            },
+            "description": "Print the receipt invoice template through the configured LAN printer. The QR command encodes paymentQrUrl as text."
+          }
+        },
+        {
+          "name": "LAN - Get Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/queue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "queue"]
+            },
+            "description": "Check whether the LAN print job completed or failed."
+          }
+        }
+      ],
+      "description": "Requests for testing LAN/TCP printers configured in config/printers.json. Set lanPrinterId to the configured printer id, for example kitchen-01."
     },
     {
       "name": "Print Receipt",

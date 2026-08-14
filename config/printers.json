@@ -1,0 +1,14 @@
+{
+  "printers": [
+    {
+      "id": "kitchen-01",
+      "name": "May in bep",
+      "connection": {
+        "type": "tcp",
+        "host": "192.168.100.100",
+        "port": 9100
+      },
+      "enabled": true
+    }
+  ]
+}

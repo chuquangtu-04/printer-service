@@ -1,5 +1,7 @@
 import { Printer } from '../models/Printer';
 import { UsbDriver } from '../drivers/UsbDriver';
+import { NetworkPrinterDriver } from '../drivers/NetworkPrinterDriver';
+import { PrinterConnection } from '../config/PrinterConfigService';
 import { PrinterNotFoundError } from '../../common/errors';
 
 export interface PrinterStatus {
@@ -64,9 +66,47 @@ export class PrinterManager {
       throw new PrinterNotFoundError(printerId);
     }
 
+    const connection = this.getConfiguredConnection(target);
+    if (connection?.type === 'tcp') {
+      await new NetworkPrinterDriver(connection.host, connection.port ?? 9100).write(data);
+      return { id: target.id, name: target.name };
+    }
+
+    if (connection?.type === 'usb') {
+      await this.usbDriver.write(connection.printerName, data);
+      return { id: target.id, name: target.name };
+    }
+
     await this.usbDriver.write(target.name, data);
 
     return { id: target.id, name: target.name };
   }
-}
 
+  private getConfiguredConnection(printer: Printer): PrinterConnection | undefined {
+    const connection = printer.meta.connection;
+
+    if (this.isTcpConnection(connection) || this.isUsbConnection(connection)) {
+      return connection;
+    }
+
+    return undefined;
+  }
+
+  private isTcpConnection(connection: unknown): connection is Extract<PrinterConnection, { type: 'tcp' }> {
+    return (
+      typeof connection === 'object' &&
+      connection !== null &&
+      (connection as { type?: unknown }).type === 'tcp' &&
+      typeof (connection as { host?: unknown }).host === 'string'
+    );
+  }
+
+  private isUsbConnection(connection: unknown): connection is Extract<PrinterConnection, { type: 'usb' }> {
+    return (
+      typeof connection === 'object' &&
+      connection !== null &&
+      (connection as { type?: unknown }).type === 'usb' &&
+      typeof (connection as { printerName?: unknown }).printerName === 'string'
+    );
+  }
+}
