@@ -4,7 +4,7 @@ import { ValidationError } from '../../common/errors';
 
 export async function print(req: Request, res: Response, next: NextFunction) {
   try {
-    const { printer, template, data } = req.body ?? {};
+    const { printer, template, data, ...payload } = req.body ?? {};
 
     if (!printer || typeof printer !== 'string') {
       throw new ValidationError('Thieu hoac sai kieu field "printer"');
@@ -12,14 +12,18 @@ export async function print(req: Request, res: Response, next: NextFunction) {
     if (!template || typeof template !== 'string') {
       throw new ValidationError('Thieu hoac sai kieu field "template"');
     }
-    if (data === undefined || typeof data !== 'object') {
-      throw new ValidationError('Thieu hoac sai kieu field "data"');
+    if (data !== undefined && typeof data !== 'object') {
+      throw new ValidationError('Sai kieu field "data"');
     }
 
-    const result = await printService.print({ printer, template, data });
+    const printData = data ?? payload;
+    if (!printData || typeof printData !== 'object') {
+      throw new ValidationError('Thieu du lieu in');
+    }
+
+    const result = await printService.print({ printer, template, data: printData });
     res.json(result);
   } catch (err) {
     next(err);
   }
 }
-

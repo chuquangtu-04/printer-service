@@ -57,6 +57,56 @@ Use a returned printer `id` or `name` as the `printer` value when calling `/api/
 
 ## Test Print API
 
+Example receipt:
+
+```json
+{
+  "template": "receipt",
+  "printer": "{{printerId}}",
+  "header": {
+    "store_name": "Nguyễn Văn Muối",
+    "address": "269 Nguyễn Văn Huyên",
+    "phone": "01234567899888"
+  },
+  "branch_name": "main-branch",
+  "invoice": {
+    "title": "HÓA ĐƠN BÁN HÀNG",
+    "barcode": {
+      "type": "CODE128",
+      "value": "SAL-FYE-FC6F9A"
+    },
+    "qrcode": {
+      "value": "https://your-domain.com/invoice/SAL-FYE-FC6F9A"
+    },
+    "code": "SAL-FYE-FC6F9A",
+    "created_at": "13/08/2026 16:36:09",
+    "customer": "Khách Lẻ",
+    "seller": "0123456789"
+  },
+  "items": [
+    {
+      "name": "Cải bò thơm",
+      "quantity": 1,
+      "unit_price": 62000,
+      "discount": 50000,
+      "amount": 12000
+    }
+  ],
+  "summary": {
+    "subtotal": 12000,
+    "discount": 1200,
+    "voucher": 0,
+    "points": 10000,
+    "tax": 1377.34,
+    "total": 800
+  },
+  "payment": {
+    "method": "cash",
+    "amount": 800
+  }
+}
+```
+
 Example kitchen ticket:
 
 ```json
@@ -89,6 +139,12 @@ You can also import:
 
 ```text
 postman_collection.json
+```
+
+Full API and Postman guide:
+
+```text
+API_DOCS.md
 ```
 
 ## Frontend SDK
