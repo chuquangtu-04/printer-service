@@ -2,8 +2,8 @@
  * @type {import('electron-builder').Configuration}
  */
 module.exports = {
-  appId: 'com.nemopos.printer-service',
-  productName: 'NemoPOS Printer Service',
+  appId: 'com.tppos.print',
+  productName: 'Tppos print',
   directories: {
     output: 'release',
   },
@@ -17,7 +17,7 @@ module.exports = {
     allowToChangeInstallationDirectory: true,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
-    shortcutName: 'NemoPOS Printer Service',
+    shortcutName: 'Tppos print',
   },
   extraResources: [
     {

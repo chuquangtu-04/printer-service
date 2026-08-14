@@ -1,8 +1,13 @@
 import { app, Tray, Menu, shell, nativeImage, NativeImage, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import { PrinterConfigService } from '../printer/config/PrinterConfigService';
 
 let tray: Tray | null = null;
+const APP_NAME = 'Tppos print';
+let printerConfigPath = '';
+
+app.setName(APP_NAME);
 
 function log(msg: string) {
   const line = `[${new Date().toISOString()}] ${msg}\n`;
@@ -26,6 +31,9 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     log('Electron app ready. Starting Express server...');
     try {
+      printerConfigPath = PrinterConfigService.ensureDefaultConfigFile();
+      log(`Printer config ready: ${printerConfigPath}`);
+
       const appPath = path.join(__dirname, '../app.js');
       log(`Requiring app from: ${appPath}`);
       require(appPath);
@@ -33,7 +41,7 @@ if (!gotTheLock) {
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.stack || err.message : String(err);
       log(`FAILED to start Express server: ${errMsg}`);
-      dialog.showErrorBox('Printer Service Startup Error', `Khong the khoi chay Express server:\n${errMsg}`);
+      dialog.showErrorBox(`${APP_NAME} Startup Error`, `Khong the khoi chay Express server:\n${errMsg}`);
     }
 
     createTray();
@@ -41,6 +49,7 @@ if (!gotTheLock) {
 }
 
 function createTray() {
+  const configPath = printerConfigPath || PrinterConfigService.resolveConfigPath();
   const iconPath = path.join(__dirname, 'tray-icon.png');
   let icon: NativeImage;
 
@@ -59,7 +68,7 @@ function createTray() {
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'NemoPOS Printer Service', enabled: false },
+    { label: APP_NAME, enabled: false },
     { label: 'Trang thai: Running (Port 9000)', enabled: false },
     { type: 'separator' },
     {
@@ -74,6 +83,22 @@ function createTray() {
         shell.openExternal('http://localhost:9000/api/printers');
       },
     },
+    {
+      label: 'Mo file cau hinh may in',
+      click: () => {
+        shell.openPath(configPath).catch((err) => {
+          log(`FAILED to open printer config: ${err}`);
+        });
+      },
+    },
+    {
+      label: 'Mo thu muc cau hinh',
+      click: () => {
+        shell.openPath(path.dirname(configPath)).catch((err) => {
+          log(`FAILED to open printer config folder: ${err}`);
+        });
+      },
+    },
     { type: 'separator' },
     {
       label: 'Thoat ung dung',
@@ -83,7 +108,7 @@ function createTray() {
     },
   ]);
 
-  tray.setToolTip('NemoPOS Printer Service (Port 9000)');
+  tray.setToolTip(`${APP_NAME} (Port 9000)`);
   tray.setContextMenu(contextMenu);
 }
 

@@ -97,10 +97,10 @@ For a network thermal printer, edit:
 config/printers.json
 ```
 
-In production on Windows, the service also supports:
+In the desktop app on Windows, Tppos print creates this file automatically on first start:
 
 ```text
-C:\ProgramData\NemoPrinter\config\printers.json
+C:\ProgramData\TpposPrint\config\printers.json
 ```
 
 You can override the path with `PRINTER_CONFIG_PATH`.

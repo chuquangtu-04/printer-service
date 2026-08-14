@@ -177,10 +177,10 @@ File cau hinh local/dev:
 config/printers.json
 ```
 
-Production Windows:
+Khi dung app desktop tren Windows, Tppos print tu tao file nay o lan mo dau tien:
 
 ```text
-C:\ProgramData\NemoPrinter\config\printers.json
+C:\ProgramData\TpposPrint\config\printers.json
 ```
 
 Co the override bang bien moi truong:

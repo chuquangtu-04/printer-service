@@ -34,6 +34,13 @@ interface LegacyConfiguredPrinter {
   connection?: unknown;
 }
 
+const CONFIG_DIR_NAME = 'TpposPrint';
+const LEGACY_CONFIG_DIR_NAME = 'NemoPrinter';
+const CONFIG_FILE_NAME = 'printers.json';
+const DEFAULT_CONFIG: PrinterConfigFile = {
+  printers: [],
+};
+
 export class PrinterConfigService {
   constructor(private readonly configPath = PrinterConfigService.resolveConfigPath()) {}
 
@@ -119,17 +126,46 @@ export class PrinterConfigService {
     return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
   }
 
-  private static resolveConfigPath(): string {
+  static ensureDefaultConfigFile(configPath = PrinterConfigService.resolveWritableConfigPath()): string {
+    const configDir = path.dirname(configPath);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+
+    if (!fs.existsSync(configPath)) {
+      fs.writeFileSync(configPath, `${JSON.stringify(DEFAULT_CONFIG, null, 2)}\n`, 'utf-8');
+    }
+
+    return configPath;
+  }
+
+  static resolveConfigPath(): string {
     if (process.env.PRINTER_CONFIG_PATH) {
       return process.env.PRINTER_CONFIG_PATH;
     }
 
     const programData = process.env.PROGRAMDATA;
     if (process.platform === 'win32' && programData) {
-      const programDataConfig = path.join(programData, 'NemoPrinter', 'config', 'printers.json');
+      const programDataConfig = path.join(programData, CONFIG_DIR_NAME, 'config', CONFIG_FILE_NAME);
       if (fs.existsSync(programDataConfig)) return programDataConfig;
+
+      const legacyProgramDataConfig = path.join(programData, LEGACY_CONFIG_DIR_NAME, 'config', CONFIG_FILE_NAME);
+      if (fs.existsSync(legacyProgramDataConfig)) return legacyProgramDataConfig;
     }
 
-    return path.join(process.cwd(), 'config', 'printers.json');
+    return path.join(process.cwd(), 'config', CONFIG_FILE_NAME);
+  }
+
+  private static resolveWritableConfigPath(): string {
+    if (process.env.PRINTER_CONFIG_PATH) {
+      return process.env.PRINTER_CONFIG_PATH;
+    }
+
+    const programData = process.env.PROGRAMDATA;
+    if (process.platform === 'win32' && programData) {
+      return path.join(programData, CONFIG_DIR_NAME, 'config', CONFIG_FILE_NAME);
+    }
+
+    return path.join(process.cwd(), 'config', CONFIG_FILE_NAME);
   }
 }
