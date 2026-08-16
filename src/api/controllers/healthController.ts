@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getHealthStatus } from '../services/health.service';
+import { getHealthStatus } from '../services/health';
 
 export const checkHealth = (_req: Request, res: Response): void => {
     try {

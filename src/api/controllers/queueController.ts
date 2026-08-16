@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import printService from '../services/PrintService';
+import printService from '../services/print';
 import { ValidationError } from '../../common/errors';
 
 export const getQueue = (_req: Request, res: Response, next: NextFunction): void => {

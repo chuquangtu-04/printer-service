@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { printerService } from '../services/printerService';
+import { printerService } from '../services/printer';
 
 export const getPrinters = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
