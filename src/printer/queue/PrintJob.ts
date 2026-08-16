@@ -1,4 +1,4 @@
-export type PrintJobStatus = 'waiting' | 'printing' | 'completed' | 'failed';
+export type PrintJobStatus = 'waiting' | 'printing' | 'spooled' | 'completed' | 'failed';
 
 export interface PrintJob {
   id: number;
@@ -16,6 +16,7 @@ export interface PrintJob {
   completedAt?: string;
   nextRunAt?: number;
   lastError?: string;
+  spoolerJobId?: number;
 }
 
 export interface CreatePrintJobInput {
@@ -40,4 +41,5 @@ export interface PrintJobSnapshot {
   startedAt?: string;
   completedAt?: string;
   lastError?: string;
+  spoolerJobId?: number;
 }

@@ -1,5 +1,5 @@
 export class RetryPolicy {
-  constructor(private readonly delaysMs = [2000, 5000, 10000]) {}
+  constructor(private readonly delaysMs = [4000]) {}
 
   get maxAttempts(): number {
     return this.delaysMs.length + 1;

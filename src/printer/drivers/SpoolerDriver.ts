@@ -12,6 +12,9 @@ interface WindowsPrinterInfo {
   PortName?: string;
   Default?: boolean;
   WorkOffline?: boolean;
+  PrinterStatus?: number;
+  DetectedErrorState?: number;
+  ExtendedPrinterStatus?: number;
 }
 
 export class SpoolerDriver {
@@ -45,7 +48,7 @@ export class SpoolerDriver {
     try {
       const { stdout } = await execAsync(
         'powershell -NoProfile -Command "Get-CimInstance -ClassName Win32_Printer | ' +
-        'Select-Object Name,PortName,Default,WorkOffline | ConvertTo-Json"'
+        'Select-Object Name,PortName,Default,WorkOffline,PrinterStatus,DetectedErrorState,ExtendedPrinterStatus | ConvertTo-Json"'
       );
 
       let raw = JSON.parse(stdout || '[]') as WindowsPrinterInfo | WindowsPrinterInfo[];
@@ -55,9 +58,15 @@ export class SpoolerDriver {
         id: this._buildId(p.Name, p.PortName ?? ''),
         name: p.Name,
         type: this._classifyPort(p.PortName),
-        status: p.WorkOffline ? 'offline' : 'online',
+        status: this._classifyWindowsStatus(p),
         isDefault: !!p.Default,
         port: p.PortName ?? null,
+        meta: {
+          workOffline: !!p.WorkOffline,
+          printerStatus: p.PrinterStatus,
+          detectedErrorState: p.DetectedErrorState,
+          extendedPrinterStatus: p.ExtendedPrinterStatus,
+        },
       }));
     } catch {
       return [];
@@ -99,6 +108,29 @@ export class SpoolerDriver {
       /^\d{1,3}(\.\d{1,3}){3}/.test(p)
     ) return 'NETWORK';
     return 'UNKNOWN';
+  }
+
+  _classifyWindowsStatus(printer: WindowsPrinterInfo): string {
+    if (printer.WorkOffline) return 'offline';
+
+    if (printer.PrinterStatus === 7) return 'offline';
+    if (printer.PrinterStatus === 6) return 'error';
+
+    const detectedErrorState = printer.DetectedErrorState;
+    if (detectedErrorState !== undefined && detectedErrorState !== null && ![0, 2].includes(detectedErrorState)) {
+      return detectedErrorState === 9 ? 'offline' : 'error';
+    }
+
+    const extendedPrinterStatus = printer.ExtendedPrinterStatus;
+    if (
+      extendedPrinterStatus !== undefined &&
+      extendedPrinterStatus !== null &&
+      ![0, 2, 3, 4, 5].includes(extendedPrinterStatus)
+    ) {
+      return extendedPrinterStatus === 7 ? 'offline' : 'error';
+    }
+
+    return 'online';
   }
 
   _parseDefault(dOut: string): string | null {

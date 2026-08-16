@@ -7,3 +7,6 @@ bin/*.pdb
 
 *.log
 *.tmp
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal

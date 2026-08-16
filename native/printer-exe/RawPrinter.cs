@@ -20,7 +20,7 @@ public static class RawPrinter
     private static extern bool ClosePrinter(IntPtr hPrinter);
 
     [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern bool StartDocPrinter(IntPtr hPrinter, int level, ref DOC_INFO_1 pDocInfo);
+    private static extern int StartDocPrinter(IntPtr hPrinter, int level, ref DOC_INFO_1 pDocInfo);
 
     [DllImport("winspool.drv", SetLastError = true)]
     private static extern bool EndDocPrinter(IntPtr hPrinter);
@@ -34,7 +34,7 @@ public static class RawPrinter
     [DllImport("winspool.drv", SetLastError = true)]
     private static extern bool WritePrinter(IntPtr hPrinter, byte[] pBytes, int dwCount, out int dwWritten);
 
-    public static void Write(string printerName, byte[] data, string docName = "Raw Print Job")
+    public static int Write(string printerName, byte[] data, string docName = "Raw Print Job")
     {
         IntPtr hPrinter = IntPtr.Zero;
 
@@ -52,7 +52,8 @@ public static class RawPrinter
                 pDataType = "RAW",
             };
 
-            if (!StartDocPrinter(hPrinter, 1, ref docInfo))
+            int jobId = StartDocPrinter(hPrinter, 1, ref docInfo);
+            if (jobId <= 0)
             {
                 throw PrinterException.FromLastWin32Error("StartDocPrinter failed");
             }
@@ -85,6 +86,8 @@ public static class RawPrinter
             {
                 EndDocPrinter(hPrinter);
             }
+
+            return jobId;
         }
         finally
         {

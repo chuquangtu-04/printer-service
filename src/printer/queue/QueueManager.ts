@@ -2,16 +2,26 @@ import { CreatePrintJobInput, PrintJob, PrintJobSnapshot } from './PrintJob';
 import { QueueRepository } from './QueueRepository';
 import { RetryPolicy } from './RetryPolicy';
 
-type PrintExecutor = (job: PrintJob) => Promise<void>;
+export interface PrintProgress {
+  status: 'spooled';
+  spoolerJobId?: number;
+}
+
+type PrintExecutor = (job: PrintJob, progress: (progress: PrintProgress) => void) => Promise<void>;
 
 export class QueueManager {
   private workers = new Map<string, boolean>();
+  private timers = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private readonly repository: QueueRepository,
     private readonly retryPolicy: RetryPolicy,
     private readonly printExecutor: PrintExecutor
-  ) {}
+  ) {
+    for (const queueKey of this.repository.queueKeysWithPending()) {
+      this.scheduleWorker(queueKey, 0);
+    }
+  }
 
   add(input: Omit<CreatePrintJobInput, 'maxAttempts'>): PrintJobSnapshot {
     const job = this.repository.add({
@@ -50,10 +60,28 @@ export class QueueManager {
   }
 
   private startWorker(queueKey: string): void {
+    const timer = this.timers.get(queueKey);
+    if (timer) {
+      clearTimeout(timer);
+      this.timers.delete(queueKey);
+    }
+
     if (this.workers.get(queueKey)) return;
 
     this.workers.set(queueKey, true);
     void this.processQueue(queueKey);
+  }
+
+  private scheduleWorker(queueKey: string, delayMs: number): void {
+    const existing = this.timers.get(queueKey);
+    if (existing) clearTimeout(existing);
+
+    const timer = setTimeout(() => {
+      this.timers.delete(queueKey);
+      this.startWorker(queueKey);
+    }, Math.max(0, delayMs));
+
+    this.timers.set(queueKey, timer);
   }
 
   private async processQueue(queueKey: string): Promise<void> {
@@ -73,6 +101,12 @@ export class QueueManager {
 
       if (this.repository.nextRunnable(queueKey)) {
         this.startWorker(queueKey);
+        return;
+      }
+
+      const nextRunAt = this.repository.nextWaitingRunAt(queueKey);
+      if (nextRunAt !== undefined) {
+        this.scheduleWorker(queueKey, nextRunAt - Date.now());
       }
     }
   }
@@ -87,7 +121,13 @@ export class QueueManager {
     });
 
     try {
-      await this.printExecutor(job);
+      await this.printExecutor(job, (progress) => {
+        if (progress.status === 'spooled') {
+          this.repository.setStatus(job, 'spooled', {
+            spoolerJobId: progress.spoolerJobId,
+          });
+        }
+      });
       this.repository.setStatus(job, 'completed', {
         completedAt: new Date().toISOString(),
       });
@@ -100,7 +140,7 @@ export class QueueManager {
           lastError,
           nextRunAt: Date.now() + delayMs,
         });
-        setTimeout(() => this.startWorker(job.queueKey), delayMs);
+        this.scheduleWorker(job.queueKey, delayMs);
         return;
       }
 

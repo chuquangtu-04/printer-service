@@ -516,10 +516,34 @@ GET http://localhost:9000/api/queue
 Trang thai job thuong di theo luong:
 
 ```text
+waiting -> printing -> spooled -> completed
+```
+
+Voi LAN/TCP printer, luong thuong la:
+
+```text
 waiting -> printing -> completed
 ```
 
-Neu may in sai ten, mat ket noi, hoac helper raw printer loi, job co the chuyen sang `failed`.
+`spooled` nghia la job da duoc day vao Windows Print Queue / Spooler va service dang theo doi job do.
+Neu Windows print job bien mat khoi spooler trong thoi gian cho phep, job duoc xem la `completed`.
+Timeout theo doi mac dinh la `10000ms`. Co the doi bang bien moi truong `PRINTER_JOB_MONITOR_TIMEOUT_MS`.
+Chu ky poll mac dinh la `1000ms`, co the doi bang `PRINTER_JOB_MONITOR_INTERVAL_MS`.
+
+Neu may in sai ten, mat ket noi, helper raw printer loi, hoac Windows print job bi treo qua timeout, job co the chuyen sang `failed`.
+Voi Windows/USB printer, service khong chan lenh in bang pre-check online/offline; service gui job vao spooler truoc, sau do theo doi Windows print job.
+Neu Windows print job bi loi hoac treo qua timeout, service se xoa job do khoi Windows spooler truoc khi retry/fail de tranh in trung phieu khi may in ket noi lai.
+Mac dinh service chi retry 1 lan sau `4000ms`. Sau khi retry het so lan, job chuyen sang `failed` va co `lastError` trong API `/api/queue`.
+
+Voi LAN/TCP printer, service van gui ESC/POS truc tiep toi `host:port`.
+Neu ket noi hoac ghi du lieu TCP loi, job se retry/fail trong queue.
+
+Queue duoc luu xuong SQLite tai `data/print-queue.sqlite` theo mac dinh, khong chi nam trong RAM.
+Co the doi duong dan file bang bien moi truong `PRINTER_QUEUE_DB_PATH`.
+Khi service restart, cac job dang `waiting` se duoc xu ly tiep. Cac job dang `printing` hoac `spooled` luc service bi tat se duoc dua ve `waiting` de thu lai.
+Job da `completed` se duoc don tu dong de file SQLite khong tang mai:
+`PRINTER_QUEUE_COMPLETED_RETENTION_HOURS` mac dinh la `24`, va `PRINTER_QUEUE_MAX_COMPLETED_JOBS` mac dinh la `1000`.
+Job `waiting`, `printing`, `spooled`, va `failed` khong bi don boi co che nay.
 
 ### Luu y tuong thich
 

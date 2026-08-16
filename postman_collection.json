@@ -320,7 +320,7 @@
           "host": ["{{baseUrl}}"],
           "path": ["api", "queue"]
         },
-        "description": "Clear queued, completed, and failed jobs. Printing jobs are kept."
+        "description": "Clear queued, completed, and failed jobs. Printing and spooled jobs are kept."
       }
     }
   ]

@@ -18,8 +18,8 @@ class PrintService {
   private queueManager = new QueueManager(
     new QueueRepository(),
     new RetryPolicy(),
-    async (job) => {
-      await this.manager.print(job.printerName, job.buffer);
+    async (job, progress) => {
+      await this.manager.print(job.printerName, job.buffer, progress);
     }
   );
 

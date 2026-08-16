@@ -24,8 +24,8 @@ if (!File.Exists(filePath))
 try
 {
     byte[] data = File.ReadAllBytes(filePath);
-    RawPrinter.Write(printerName, data, docName);
-    Console.WriteLine("OK");
+    int jobId = RawPrinter.Write(printerName, data, docName);
+    Console.WriteLine($"OK JOB_ID={jobId}");
     return EXIT_SUCCESS;
 }
 catch (PrinterException ex)

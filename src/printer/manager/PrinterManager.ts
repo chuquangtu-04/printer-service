@@ -19,6 +19,8 @@ export interface PrinterDriver {
   status(): Promise<PrinterStatus[]>;
 }
 
+export type PrintProgressReporter = (progress: { status: 'spooled'; spoolerJobId?: number }) => void;
+
 export class PrinterManager {
   drivers: PrinterDriver[];
   private usbDriver: UsbDriver;
@@ -58,7 +60,7 @@ export class PrinterManager {
     return results.flat();
   }
 
-  async print(printerId: string, data: Buffer): Promise<{ id: string; name: string }> {
+  async print(printerId: string, data: Buffer, progress?: PrintProgressReporter): Promise<{ id: string; name: string }> {
     const printers = await this.discoverAll();
     const target = printers.find((p) => p.id === printerId || p.name === printerId);
 
@@ -73,11 +75,11 @@ export class PrinterManager {
     }
 
     if (connection?.type === 'usb') {
-      await this.usbDriver.write(connection.printerName, data);
+      await this.usbDriver.write(connection.printerName, data, { progress });
       return { id: target.id, name: target.name };
     }
 
-    await this.usbDriver.write(target.name, data);
+    await this.usbDriver.write(target.name, data, { progress });
 
     return { id: target.id, name: target.name };
   }
