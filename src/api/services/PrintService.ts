@@ -1,11 +1,11 @@
-import { PrinterManager } from '../manager/PrinterManager';
-import { SpoolerDriver } from '../drivers/SpoolerDriver';
-import { ConfiguredPrinterDriver } from '../drivers/ConfiguredPrinterDriver';
-import { BuilderFactory } from '../builders/BuilderFactory';
-import { QueueManager } from '../queue/QueueManager';
-import { QueueRepository } from '../queue/QueueRepository';
-import { RetryPolicy } from '../queue/RetryPolicy';
-import { PrintJobSnapshot } from '../queue/PrintJob';
+import { PrinterManager } from '../../printer/manager/PrinterManager';
+import { SpoolerDriver } from '../../printer/drivers/SpoolerDriver';
+import { ConfiguredPrinterDriver } from '../../printer/drivers/ConfiguredPrinterDriver';
+import { BuilderFactory } from '../../printer/builders/BuilderFactory';
+import { QueueManager } from '../../printer/queue/QueueManager';
+import { QueueRepository } from '../../printer/queue/QueueRepository';
+import { RetryPolicy } from '../../printer/queue/RetryPolicy';
+import { PrintJobSnapshot } from '../../printer/queue/PrintJob';
 
 interface PrintRequest {
   printer: string;

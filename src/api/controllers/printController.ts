@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import printService from '../../printer/services/PrintService';
+import printService from '../services/PrintService';
 import { ValidationError } from '../../common/errors';
 
 export async function print(req: Request, res: Response, next: NextFunction) {

@@ -1,7 +1,7 @@
-import { PrinterManager } from '../manager/PrinterManager';
-import { SpoolerDriver } from '../drivers/SpoolerDriver';
-import { ConfiguredPrinterDriver } from '../drivers/ConfiguredPrinterDriver';
-import { TestBuilder } from '../builders/TestBuilder';
+import { PrinterManager } from '../../printer/manager/PrinterManager';
+import { SpoolerDriver } from '../../printer/drivers/SpoolerDriver';
+import { ConfiguredPrinterDriver } from '../../printer/drivers/ConfiguredPrinterDriver';
+import { TestBuilder } from '../../printer/builders/TestBuilder';
 
 class PrinterService {
   manager: PrinterManager;
