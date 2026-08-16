@@ -32,6 +32,7 @@ class PrintService {
       printer,
       printerName: printer,
       template,
+      data,
       buffer,
     });
 
@@ -40,6 +41,10 @@ class PrintService {
 
   listQueue(): PrintJobSnapshot[] {
     return this.queueManager.list();
+  }
+
+  listFailedQueue(): PrintJobSnapshot[] {
+    return this.queueManager.listFailed();
   }
 
   clearQueue(): { success: true; removed: number } {

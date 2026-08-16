@@ -14,6 +14,7 @@ interface PrintJobRow {
   printer: string;
   printer_name: string;
   template: string;
+  payload_json: string | null;
   buffer: Uint8Array;
   status: PrintJobStatus;
   attempts: number;
@@ -48,15 +49,16 @@ export class QueueRepository {
     const now = new Date().toISOString();
     const result = this.db.prepare(`
       INSERT INTO print_jobs (
-        queue_key, printer, printer_name, template, buffer, status,
+        queue_key, printer, printer_name, template, payload_json, buffer, status,
         attempts, max_attempts, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, 'waiting', 0, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, 'waiting', 0, ?, ?, ?)
     `).run(
       input.queueKey,
       input.printer,
       input.printerName,
       input.template,
+      toJsonText(input.data),
       input.buffer,
       input.maxAttempts,
       now,
@@ -180,8 +182,8 @@ export class QueueRepository {
     });
   }
 
-  toSnapshot(job: PrintJob): PrintJobSnapshot {
-    return {
+  toSnapshot(job: PrintJob, options: { includeData?: boolean } = {}): PrintJobSnapshot {
+    const snapshot: PrintJobSnapshot = {
       id: job.id,
       status: job.status,
       printer: job.printer,
@@ -196,6 +198,12 @@ export class QueueRepository {
       lastError: job.lastError,
       spoolerJobId: job.spoolerJobId,
     };
+
+    if (options.includeData) {
+      snapshot.data = job.data;
+    }
+
+    return snapshot;
   }
 
   private initialize(): void {
@@ -206,6 +214,7 @@ export class QueueRepository {
         printer TEXT NOT NULL,
         printer_name TEXT NOT NULL,
         template TEXT NOT NULL,
+        payload_json TEXT,
         buffer BLOB NOT NULL,
         status TEXT NOT NULL,
         attempts INTEGER NOT NULL,
@@ -223,8 +232,16 @@ export class QueueRepository {
         ON print_jobs(queue_key, status, next_run_at, id);
     `);
 
+    this.ensureColumn('print_jobs', 'payload_json', 'TEXT');
     this.resetInterruptedJobs();
     this.cleanupCompletedJobs();
+  }
+
+  private ensureColumn(tableName: string, columnName: string, columnDefinition: string): void {
+    const columns = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+    if (columns.some((column) => column.name === columnName)) return;
+
+    this.db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`);
   }
 
   private cleanupCompletedJobs(): void {
@@ -274,6 +291,7 @@ export class QueueRepository {
       printer: row.printer,
       printerName: row.printer_name,
       template: row.template,
+      data: fromJsonText(row.payload_json),
       buffer: Buffer.from(row.buffer),
       status: row.status,
       attempts: row.attempts,
@@ -292,4 +310,24 @@ export class QueueRepository {
 function positiveInteger(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function toJsonText(value: unknown): string | null {
+  if (value === undefined) return null;
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return JSON.stringify({ value: String(value) });
+  }
+}
+
+function fromJsonText(value: string | null): unknown {
+  if (!value) return undefined;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
 }

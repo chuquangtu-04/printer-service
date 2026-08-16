@@ -37,6 +37,10 @@ export class QueueManager {
     return this.repository.list();
   }
 
+  listFailed(): PrintJobSnapshot[] {
+    return this.repository.findFailed().map((job) => this.repository.toSnapshot(job, { includeData: true }));
+  }
+
   clear(): { success: true; removed: number } {
     return {
       success: true,

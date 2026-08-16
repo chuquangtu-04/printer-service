@@ -22,6 +22,7 @@ GET  /api/printers
 POST /api/printers/test
 POST /api/print
 GET  /api/queue
+GET  /api/queue/failed
 ```
 
 Khac nhau duy nhat la gia tri field `printer`:
@@ -566,6 +567,44 @@ Queue giup moi may in xu ly job theo thu tu, tranh nhieu lenh in cung luc lam tr
 
 ```bash
 curl -X GET http://localhost:9000/api/queue
+```
+
+### Xem job in loi
+
+Dung de lay rieng cac job da `failed` sau khi retry het so lan.
+
+- **Endpoint:** `/api/queue/failed`
+- **Method:** `GET`
+
+```bash
+curl -X GET http://localhost:9000/api/queue/failed
+```
+
+Response co kem payload goc da gui vao `/api/print`, giup FE hien thi bill/món bi loi:
+
+```json
+{
+  "success": true,
+  "total": 1,
+  "jobs": [
+    {
+      "id": 12,
+      "status": "failed",
+      "printer": "kitchen-01",
+      "printerName": "kitchen-01",
+      "template": "kitchen",
+      "attempts": 2,
+      "maxAttempts": 2,
+      "lastError": "Network printer timeout: 192.168.1.50:9100",
+      "data": {
+        "table": "B05",
+        "items": [
+          { "name": "Pho bo", "qty": 2 }
+        ]
+      }
+    }
+  ]
+}
 ```
 
 ### Clear queue

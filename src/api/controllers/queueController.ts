@@ -10,6 +10,19 @@ export const getQueue = (_req: Request, res: Response, next: NextFunction): void
   }
 };
 
+export const getFailedQueue = (_req: Request, res: Response, next: NextFunction): void => {
+  try {
+    const jobs = printService.listFailedQueue();
+    res.json({
+      success: true,
+      total: jobs.length,
+      jobs,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const clearQueue = (_req: Request, res: Response, next: NextFunction): void => {
   try {
     res.json(printService.clearQueue());

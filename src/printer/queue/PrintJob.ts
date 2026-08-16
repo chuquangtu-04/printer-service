@@ -6,6 +6,7 @@ export interface PrintJob {
   printer: string;
   printerName: string;
   template: string;
+  data?: unknown;
   buffer: Buffer;
   status: PrintJobStatus;
   attempts: number;
@@ -24,6 +25,7 @@ export interface CreatePrintJobInput {
   printer: string;
   printerName: string;
   template: string;
+  data: unknown;
   buffer: Buffer;
   maxAttempts: number;
 }
@@ -34,6 +36,7 @@ export interface PrintJobSnapshot {
   printer: string;
   printerName: string;
   template: string;
+  data?: unknown;
   attempts: number;
   maxAttempts: number;
   createdAt: string;
