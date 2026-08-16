@@ -93,20 +93,7 @@
           }
         },
         {
-          "name": "LAN - Test Print By URL",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/printers/{{lanPrinterId}}/test",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "printers", "{{lanPrinterId}}", "test"]
-            },
-            "description": "Send a test print to the LAN printer alias from config/printers.json."
-          }
-        },
-        {
-          "name": "LAN - Test Print By Body",
+          "name": "LAN - Test Print",
           "request": {
             "method": "POST",
             "header": [
@@ -124,7 +111,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "printers", "test"]
             },
-            "description": "Same LAN test print using the old /api/printers/test endpoint."
+            "description": "Send a test print to the LAN printer alias from config/printers.json."
           }
         },
         {

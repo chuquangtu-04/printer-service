@@ -297,19 +297,6 @@ Invoke-RestMethod -Uri 'http://localhost:9000/api/printers/test' `
   -Body '{"printerId": "XP-80C"}'
 ```
 
-Neu dung printer id da cau hinh trong `config/printers.json`, co the test truc tiep bang URL:
-
-- **Endpoint:** `/api/printers/:printerId/test`
-- **Method:** `POST`
-
-```bash
-curl -X POST http://localhost:9000/api/printers/kitchen-01/test
-```
-
-```powershell
-Invoke-RestMethod -Uri 'http://localhost:9000/api/printers/kitchen-01/test' -Method Post
-```
-
 ## 4. In theo template
 
 API nay nhan du lieu tu POS, dung template de tao lenh ESC/POS, sau do dua job vao queue in cua may in duoc chon.
