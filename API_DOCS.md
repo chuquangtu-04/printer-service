@@ -616,12 +616,25 @@ Response co kem payload goc da gui vao `/api/print`, giup FE hien thi bill/món 
 curl -X DELETE http://localhost:9000/api/queue
 ```
 
-### Retry job failed
+### Retry mot job failed
+
+API nay dung khi FE/POS muon cho in lai mot job da bi loi sau khi service da retry tu dong het so lan.
 
 - **Endpoint:** `/api/queue/retry`
 - **Method:** `POST`
+- **Headers:** `Content-Type: application/json`
+- **Body:** truyen `id` cua job failed. Field `jobId` cung duoc ho tro de tuong thich.
 
-Retry mot job:
+Chi cac job dang co `status = "failed"` moi duoc reset ve queue de in lai. Sau khi retry, job se duoc dua lai vao hang doi cua may in tuong ung va service se tu xu ly tiep.
+
+#### Luong su dung tren FE/POS
+
+1. Goi `GET /api/queue/failed` de lay danh sach job loi.
+2. Hien thi thong tin job loi cho nguoi dung, vi du may in, template, `lastError`, va payload `data`.
+3. Khi nguoi dung bam "In lai", goi `POST /api/queue/retry` voi `id` cua job do.
+4. Goi lai `GET /api/queue` hoac `GET /api/queue/failed` de cap nhat trang thai tren giao dien.
+
+#### Request retry 1 job bang `id`
 
 ```bash
 curl -X POST http://localhost:9000/api/queue/retry \
@@ -629,10 +642,132 @@ curl -X POST http://localhost:9000/api/queue/retry \
   -d '{"id": 5}'
 ```
 
-Retry tat ca job failed:
+```powershell
+Invoke-RestMethod -Uri 'http://localhost:9000/api/queue/retry' `
+  -Method Post `
+  -Headers @{ 'Content-Type' = 'application/json' } `
+  -Body '{"id": 5}'
+```
+
+```javascript
+await fetch('http://localhost:9000/api/queue/retry', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ id: 5 }),
+});
+```
+
+#### Request retry 1 job bang `jobId`
+
+```json
+{
+  "jobId": 5
+}
+```
+
+#### Response thanh cong
+
+```json
+{
+  "success": true,
+  "retried": 1,
+  "jobs": [
+    {
+      "id": 5,
+      "status": "waiting",
+      "printer": "kitchen-01",
+      "printerName": "kitchen-01",
+      "template": "kitchen",
+      "attempts": 0,
+      "maxAttempts": 2,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "updatedAt": "2026-08-17T09:05:00.000Z"
+    }
+  ]
+}
+```
+
+`retried` la so job duoc API tim thay va tra ve sau lenh retry. Voi retry mot job hop le, gia tri thuong la `1`.
+
+Neu `id` khong ton tai, API van tra thanh cong nhung khong co job nao duoc retry:
+
+```json
+{
+  "success": true,
+  "retried": 0,
+  "jobs": []
+}
+```
+
+#### Loi validation
+
+`id` hoac `jobId` phai la so nguyen duong.
+
+Request sai:
+
+```json
+{
+  "id": "abc"
+}
+```
+
+Response:
+
+```json
+{
+  "success": false,
+  "message": "Field \"id\" phai la so nguyen duong"
+}
+```
+
+HTTP status: `400`.
+
+#### Luu y quan trong
+
+- API nay khong tao job moi; no reset job failed cu de service in lai.
+- Nen sua nguyen nhan loi truoc khi retry, vi du bat lai may in, dung lai IP LAN, cam lai USB, hoac chon dung printer alias.
+- Neu job khong o trang thai `failed`, API co the tra ve job do nhung service se khong reset/in lai job.
+- Response cua retry khong kem payload `data` goc. Neu FE can hien thi noi dung bill/mon loi, lay tu `GET /api/queue/failed` truoc khi retry.
+
+### Retry tat ca job failed
+
+Dung khi muon dua tat ca job failed hien co ve lai hang doi in.
 
 ```bash
 curl -X POST http://localhost:9000/api/queue/retry \
   -H "Content-Type: application/json" \
   -d '{}'
+```
+
+Response mau:
+
+```json
+{
+  "success": true,
+  "retried": 2,
+  "jobs": [
+    {
+      "id": 5,
+      "status": "waiting",
+      "printer": "kitchen-01",
+      "printerName": "kitchen-01",
+      "template": "kitchen",
+      "attempts": 0,
+      "maxAttempts": 2,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "updatedAt": "2026-08-17T09:05:00.000Z"
+    },
+    {
+      "id": 6,
+      "status": "waiting",
+      "printer": "XP-T80A",
+      "printerName": "XP-T80A",
+      "template": "receipt",
+      "attempts": 0,
+      "maxAttempts": 2,
+      "createdAt": "2026-08-17T09:01:00.000Z",
+      "updatedAt": "2026-08-17T09:05:00.000Z"
+    }
+  ]
+}
 ```
