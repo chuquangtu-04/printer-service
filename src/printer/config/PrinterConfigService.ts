@@ -19,8 +19,25 @@ export interface ConfiguredPrinter {
   connection: PrinterConnection;
 }
 
+export interface LanDiscoveryConfig {
+  ports: number[];
+  subnetIp?: string;
+  netmask?: string;
+  concurrency?: number;
+  timeoutMs?: number;
+}
+
 interface PrinterConfigFile {
   printers?: unknown;
+  discovery?: unknown;
+}
+
+interface PrinterDiscoveryConfig {
+  ports?: unknown;
+  subnetIp?: unknown;
+  netmask?: unknown;
+  concurrency?: unknown;
+  timeoutMs?: unknown;
 }
 
 interface LegacyConfiguredPrinter {
@@ -38,17 +55,32 @@ const CONFIG_DIR_NAME = 'TpposPrint';
 const LEGACY_CONFIG_DIR_NAME = 'NemoPrinter';
 const CONFIG_FILE_NAME = 'printers.json';
 const DEFAULT_CONFIG: PrinterConfigFile = {
-  printers: [],
+  discovery: {
+    ports: [9100],
+    subnetIp: '',
+    netmask: '',
+    concurrency: 40,
+    timeoutMs: 300,
+  },
+  printers: [
+    {
+      id: 'kitchen-01',
+      name: 'May in bep',
+      connection: {
+        type: 'tcp',
+        host: '192.168.1.100',
+        port: 9100,
+      },
+      enabled: false,
+    },
+  ],
 };
 
 export class PrinterConfigService {
   constructor(private readonly configPath = PrinterConfigService.resolveConfigPath()) {}
 
   listPrinters(): ConfiguredPrinter[] {
-    if (!fs.existsSync(this.configPath)) return [];
-
-    const content = fs.readFileSync(this.configPath, 'utf-8');
-    const config = JSON.parse(content) as PrinterConfigFile;
+    const config = this.readConfig();
     if (!Array.isArray(config.printers)) return [];
 
     return config.printers
@@ -56,8 +88,41 @@ export class PrinterConfigService {
       .filter((printer): printer is ConfiguredPrinter => printer !== null);
   }
 
+  getLanDiscoveryConfig(): LanDiscoveryConfig {
+    const config = this.readConfig();
+    const discovery = config.discovery as PrinterDiscoveryConfig | undefined;
+
+    return {
+      ports: this.normalizePorts(discovery?.ports),
+      subnetIp: this.stringValue(discovery?.subnetIp),
+      netmask: this.stringValue(discovery?.netmask),
+      concurrency: this.positiveIntegerValue(discovery?.concurrency),
+      timeoutMs: this.positiveIntegerValue(discovery?.timeoutMs),
+    };
+  }
+
+  getLanDiscoveryPorts(): number[] {
+    return this.getLanDiscoveryConfig().ports;
+  }
+
+  private normalizePorts(value: unknown): number[] {
+    if (!Array.isArray(value)) return [];
+    const uniquePorts = new Set<number>();
+
+    for (const item of value) {
+      const port = this.portValue(item);
+      if (port !== undefined) uniquePorts.add(port);
+    }
+
+    return [...uniquePorts].sort((a, b) => a - b);
+  }
+
   getPrinter(printerId: string): ConfiguredPrinter | undefined {
     return this.listPrinters().find((printer) => printer.id === printerId || printer.name === printerId);
+  }
+
+  getConfigPath(): string {
+    return this.configPath;
   }
 
   private normalizePrinter(printer: LegacyConfiguredPrinter): ConfiguredPrinter | null {
@@ -126,6 +191,38 @@ export class PrinterConfigService {
     return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
   }
 
+  private portValue(value: unknown): number | undefined {
+    const parsed = typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value.trim())
+        : NaN;
+
+    return Number.isInteger(parsed) && parsed > 0 && parsed <= 65535 ? parsed : undefined;
+  }
+
+  private positiveIntegerValue(value: unknown): number | undefined {
+    const parsed = typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value.trim())
+        : NaN;
+
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+  }
+
+  private readConfig(): PrinterConfigFile {
+    if (!fs.existsSync(this.configPath)) return DEFAULT_CONFIG;
+
+    const content = this.readJsonText(this.configPath);
+    const config = JSON.parse(content) as PrinterConfigFile;
+
+    return {
+      discovery: config.discovery ?? DEFAULT_CONFIG.discovery,
+      printers: config.printers ?? DEFAULT_CONFIG.printers,
+    };
+  }
+
   static ensureDefaultConfigFile(configPath = PrinterConfigService.resolveWritableConfigPath()): string {
     const configDir = path.dirname(configPath);
     if (!fs.existsSync(configDir)) {
@@ -134,9 +231,33 @@ export class PrinterConfigService {
 
     if (!fs.existsSync(configPath)) {
       fs.writeFileSync(configPath, `${JSON.stringify(DEFAULT_CONFIG, null, 2)}\n`, 'utf-8');
+    } else {
+      PrinterConfigService.ensureDiscoveryConfig(configPath);
     }
 
     return configPath;
+  }
+
+  private static ensureDiscoveryConfig(configPath: string): void {
+    const content = PrinterConfigService.readJsonText(configPath);
+    const config = JSON.parse(content) as PrinterConfigFile;
+    const discovery = config.discovery as PrinterDiscoveryConfig | undefined;
+
+    if (Array.isArray(discovery?.ports)) return;
+
+    fs.writeFileSync(
+      configPath,
+      `${JSON.stringify({ ...config, discovery: DEFAULT_CONFIG.discovery }, null, 2)}\n`,
+      'utf-8'
+    );
+  }
+
+  private readJsonText(filePath: string): string {
+    return PrinterConfigService.readJsonText(filePath);
+  }
+
+  private static readJsonText(filePath: string): string {
+    return fs.readFileSync(filePath, 'utf-8').replace(/^\uFEFF/, '');
   }
 
   static resolveConfigPath(): string {

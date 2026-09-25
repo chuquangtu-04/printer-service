@@ -1,14 +1,21 @@
 {
+  "discovery": {
+    "ports": [9100],
+    "subnetIp": "",
+    "netmask": "",
+    "concurrency": 40,
+    "timeoutMs": 300
+  },
   "printers": [
     {
       "id": "kitchen-01",
       "name": "May in bep",
       "connection": {
         "type": "tcp",
-        "host": "192.168.100.100",
+        "host": "192.168.1.100",
         "port": 9100
       },
-      "enabled": true
+      "enabled": false
     }
   ]
 }
