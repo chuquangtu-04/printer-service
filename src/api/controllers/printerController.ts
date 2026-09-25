@@ -44,6 +44,32 @@ export const testPrint = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+export const testLanPrinter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const host = requiredIPv4(req.body?.host, 'host');
+    const port = optionalPort(req.body?.port);
+
+    const result = await printerService.testLanPrinter({ host, port });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const saveLanPrinter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = requiredPrinterId(req.body?.id);
+    const name = requiredString(req.body?.name, 'name');
+    const host = requiredIPv4(req.body?.host, 'host');
+    const port = optionalPort(req.body?.port);
+
+    const result = printerService.saveLanPrinter({ id, name, host, port });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 function optionalString(value: unknown): string | undefined {
   if (value === undefined) return undefined;
   if (Array.isArray(value)) return optionalString(value[0]);
@@ -58,6 +84,55 @@ function optionalPositiveInteger(value: unknown, field: string, max: number): nu
   const parsed = Number(text);
   if (!Number.isInteger(parsed) || parsed <= 0 || parsed > max) {
     throw new ValidationError(`Field "${field}" phai la so nguyen duong <= ${max}`);
+  }
+
+  return parsed;
+}
+
+function requiredString(value: unknown, field: string): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new ValidationError(`Thieu hoac sai kieu field "${field}"`);
+  }
+
+  return value.trim();
+}
+
+function requiredPrinterId(value: unknown): string {
+  const id = requiredString(value, 'id');
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    throw new ValidationError('Field "id" chi duoc gom chu cai, so, gach ngang va gach duoi');
+  }
+
+  return id;
+}
+
+function requiredIPv4(value: unknown, field: string): string {
+  const ip = requiredString(value, field);
+  const parts = ip.split('.');
+  const valid = parts.length === 4 && parts.every((part) => {
+    if (!/^\d{1,3}$/.test(part)) return false;
+    const octet = Number(part);
+    return octet >= 0 && octet <= 255;
+  });
+
+  if (!valid) {
+    throw new ValidationError(`Field "${field}" phai la IPv4 hop le`);
+  }
+
+  return ip;
+}
+
+function optionalPort(value: unknown): number {
+  if (value === undefined || value === null || value === '') return 9100;
+
+  const parsed = typeof value === 'number'
+    ? value
+    : typeof value === 'string'
+      ? Number(value.trim())
+      : NaN;
+
+  if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 65535) {
+    throw new ValidationError('Field "port" phai la so nguyen duong tu 1 den 65535');
   }
 
   return parsed;

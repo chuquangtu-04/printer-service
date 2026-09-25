@@ -22,6 +22,21 @@
       "type": "string"
     },
     {
+      "key": "lanPrinterHost",
+      "value": "192.168.100.100",
+      "type": "string"
+    },
+    {
+      "key": "lanPrinterPort",
+      "value": "9100",
+      "type": "string"
+    },
+    {
+      "key": "lanPrinterName",
+      "value": "May in bep",
+      "type": "string"
+    },
+    {
       "key": "failedJobId",
       "value": "1",
       "type": "string"
@@ -65,6 +80,63 @@
               "path": ["api", "printers"]
             },
             "description": "List Windows printers and configured LAN/USB aliases."
+          }
+        },
+        {
+          "name": "Discover LAN Printers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/printers/lan/discover",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "printers", "lan", "discover"]
+            },
+            "description": "Scan the current LAN and return IP addresses that expose printer ports configured in printers.json discovery.ports."
+          }
+        },
+        {
+          "name": "Test LAN Printer By IP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"host\": \"{{lanPrinterHost}}\",\n  \"port\": {{lanPrinterPort}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/printers/lan/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "printers", "lan", "test"]
+            },
+            "description": "Send a test print directly to a LAN printer IP/port. This request does not save config."
+          }
+        },
+        {
+          "name": "Save LAN Printer Alias",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{lanPrinterId}}\",\n  \"name\": \"{{lanPrinterName}}\",\n  \"host\": \"{{lanPrinterHost}}\",\n  \"port\": {{lanPrinterPort}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/printers/lan/save",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "printers", "lan", "save"]
+            },
+            "description": "Save or update a LAN printer alias in printers.json after the user confirms the test print."
           }
         },
         {

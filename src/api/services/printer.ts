@@ -1,9 +1,15 @@
 import { PrinterManager } from '../../printer/manager/PrinterManager';
 import { SpoolerDriver } from '../../printer/drivers/SpoolerDriver';
 import { ConfiguredPrinterDriver } from '../../printer/drivers/ConfiguredPrinterDriver';
+import { NetworkPrinterDriver } from '../../printer/drivers/NetworkPrinterDriver';
 import { TestBuilder } from '../../printer/builders/TestBuilder';
 import { LanPrinterDiscovery, LanPrinterDiscoveryOptions } from '../../printer/discovery/LanPrinterDiscovery';
-import { PrinterConfigService } from '../../printer/config/PrinterConfigService';
+import { PrinterConfigService, SaveLanPrinterInput } from '../../printer/config/PrinterConfigService';
+
+interface LanPrinterTarget {
+  host: string;
+  port: number;
+}
 
 class PrinterService {
   manager: PrinterManager;
@@ -35,6 +41,32 @@ class PrinterService {
     return {
       success: true,
       message: `Da gui lenh test print toi ${target.name}`,
+    };
+  }
+
+  async testLanPrinter(target: LanPrinterTarget) {
+    const content = await new TestBuilder().build({
+      title: 'LAN PRINTER TEST',
+      lines: [
+        `IP: ${target.host}`,
+        `Port: ${target.port}`,
+      ],
+    });
+    await new NetworkPrinterDriver(target.host, target.port).write(content);
+
+    return {
+      success: true,
+      message: `Da gui lenh test print toi ${target.host}:${target.port}`,
+    };
+  }
+
+  saveLanPrinter(input: SaveLanPrinterInput) {
+    const printer = this.configService.saveLanPrinter(input);
+
+    return {
+      success: true,
+      message: 'Da luu may in LAN',
+      printer,
     };
   }
 }

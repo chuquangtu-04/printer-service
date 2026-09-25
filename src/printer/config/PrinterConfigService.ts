@@ -27,6 +27,13 @@ export interface LanDiscoveryConfig {
   timeoutMs?: number;
 }
 
+export interface SaveLanPrinterInput {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+}
+
 interface PrinterConfigFile {
   printers?: unknown;
   discovery?: unknown;
@@ -119,6 +126,36 @@ export class PrinterConfigService {
 
   getPrinter(printerId: string): ConfiguredPrinter | undefined {
     return this.listPrinters().find((printer) => printer.id === printerId || printer.name === printerId);
+  }
+
+  saveLanPrinter(input: SaveLanPrinterInput): ConfiguredPrinter {
+    const config = this.readConfig();
+    const printers = Array.isArray(config.printers) ? [...config.printers] : [];
+    const savedPrinter: ConfiguredPrinter = {
+      id: input.id,
+      name: input.name,
+      enabled: true,
+      connection: {
+        type: 'tcp',
+        host: input.host,
+        port: input.port,
+      },
+    };
+
+    const existingIndex = printers.findIndex((printer) => this.matchesPrinterId(printer, input.id));
+    if (existingIndex >= 0) {
+      printers[existingIndex] = savedPrinter;
+    } else {
+      printers.push(savedPrinter);
+    }
+
+    this.writeConfig({
+      ...config,
+      discovery: config.discovery ?? DEFAULT_CONFIG.discovery,
+      printers,
+    });
+
+    return savedPrinter;
   }
 
   getConfigPath(): string {
@@ -221,6 +258,18 @@ export class PrinterConfigService {
       discovery: config.discovery ?? DEFAULT_CONFIG.discovery,
       printers: config.printers ?? DEFAULT_CONFIG.printers,
     };
+  }
+
+  private writeConfig(config: PrinterConfigFile): void {
+    fs.mkdirSync(path.dirname(this.configPath), { recursive: true });
+    fs.writeFileSync(this.configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
+  }
+
+  private matchesPrinterId(printer: unknown, id: string): boolean {
+    if (typeof printer !== 'object' || printer === null) return false;
+
+    const candidate = printer as { id?: unknown; printer_id?: unknown };
+    return candidate.id === id || candidate.printer_id === id;
   }
 
   static ensureDefaultConfigFile(configPath = PrinterConfigService.resolveWritableConfigPath()): string {

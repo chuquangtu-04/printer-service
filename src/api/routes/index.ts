@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { checkHealth } from '../controllers/healthController';
-import { discoverLanPrinters, getPrinters, testPrint } from '../controllers/printerController';
+import { discoverLanPrinters, getPrinters, saveLanPrinter, testLanPrinter, testPrint } from '../controllers/printerController';
 import { clearQueue, getFailedQueue, getQueue, retryQueue } from '../controllers/queueController';
 import { print } from '../controllers/printController';
 
@@ -12,6 +12,8 @@ router.get('/health', checkHealth);
 // Printers
 router.get('/printers/lan/discover', discoverLanPrinters);
 router.get('/printers', getPrinters);
+router.post('/printers/lan/test', testLanPrinter);
+router.post('/printers/lan/save', saveLanPrinter);
 
 // Print
 router.post('/print', print);
