@@ -102,7 +102,7 @@ export class LanPrinterDiscovery {
       return { subnetIp: options.subnetIp, netmask: options.netmask };
     }
 
-    const [firstInterface] = this.getLocalIPv4Interfaces();
+    const [firstInterface] = this.getPreferredIPv4Interfaces();
     if (!firstInterface) {
       throw new ValidationError('Khong tim thay interface IPv4 LAN de quet may in');
     }
