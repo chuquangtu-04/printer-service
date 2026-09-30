@@ -4,7 +4,7 @@ import { ConfiguredPrinterDriver } from '../../printer/drivers/ConfiguredPrinter
 import { NetworkPrinterDriver } from '../../printer/drivers/NetworkPrinterDriver';
 import { TestBuilder } from '../../printer/builders/TestBuilder';
 import { LanPrinterDiscovery, LanPrinterDiscoveryOptions } from '../../printer/discovery/LanPrinterDiscovery';
-import { PrinterConfigService, SaveLanPrinterInput } from '../../printer/config/PrinterConfigService';
+import { PrinterConfigService, SaveLanPrinterInput, UpdateLanPrinterNameInput } from '../../printer/config/PrinterConfigService';
 
 interface LanPrinterTarget {
   host: string;
@@ -66,6 +66,26 @@ class PrinterService {
     return {
       success: true,
       message: 'Da luu may in LAN',
+      printer,
+    };
+  }
+
+  updateLanPrinterName(input: UpdateLanPrinterNameInput) {
+    const printer = this.configService.updateLanPrinterName(input);
+
+    return {
+      success: true,
+      message: 'Da cap nhat ten may in LAN',
+      printer,
+    };
+  }
+
+  deleteLanPrinter(id: string) {
+    const printer = this.configService.deleteLanPrinter(id);
+
+    return {
+      success: true,
+      message: 'Da xoa may in LAN',
       printer,
     };
   }

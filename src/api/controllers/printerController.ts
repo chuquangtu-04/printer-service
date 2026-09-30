@@ -70,6 +70,29 @@ export const saveLanPrinter = async (req: Request, res: Response, next: NextFunc
   }
 };
 
+export const updateLanPrinterName = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = requiredPrinterId(req.params.id);
+    const name = requiredString(req.body?.name, 'name');
+
+    const result = printerService.updateLanPrinterName({ id, name });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteLanPrinter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = requiredPrinterId(req.params.id);
+
+    const result = printerService.deleteLanPrinter(id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 function optionalString(value: unknown): string | undefined {
   if (value === undefined) return undefined;
   if (Array.isArray(value)) return optionalString(value[0]);

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { ConfiguredLanPrinterNotFoundError } from '../../common/errors';
 
 export type PrinterConnection =
   | {
@@ -32,6 +33,11 @@ export interface SaveLanPrinterInput {
   name: string;
   host: string;
   port: number;
+}
+
+export interface UpdateLanPrinterNameInput {
+  id: string;
+  name: string;
 }
 
 interface PrinterConfigFile {
@@ -158,6 +164,60 @@ export class PrinterConfigService {
     return savedPrinter;
   }
 
+  updateLanPrinterName(input: UpdateLanPrinterNameInput): ConfiguredPrinter {
+    const config = this.readConfig();
+    const printers = Array.isArray(config.printers) ? [...config.printers] : [];
+    const printerIndex = this.findLanPrinterIndex(printers, input.id);
+
+    if (printerIndex < 0) {
+      throw new ConfiguredLanPrinterNotFoundError(input.id);
+    }
+
+    const existingPrinter = this.asRecord(printers[printerIndex]);
+    printers[printerIndex] = {
+      ...existingPrinter,
+      name: input.name,
+    };
+
+    this.writeConfig({
+      ...config,
+      discovery: config.discovery ?? DEFAULT_CONFIG.discovery,
+      printers,
+    });
+
+    const updatedPrinter = this.normalizePrinter(printers[printerIndex] as LegacyConfiguredPrinter);
+    if (!updatedPrinter) {
+      throw new ConfiguredLanPrinterNotFoundError(input.id);
+    }
+
+    return updatedPrinter;
+  }
+
+  deleteLanPrinter(id: string): ConfiguredPrinter {
+    const config = this.readConfig();
+    const printers = Array.isArray(config.printers) ? [...config.printers] : [];
+    const printerIndex = this.findLanPrinterIndex(printers, id);
+
+    if (printerIndex < 0) {
+      throw new ConfiguredLanPrinterNotFoundError(id);
+    }
+
+    const deletedPrinter = this.normalizePrinter(printers[printerIndex] as LegacyConfiguredPrinter);
+    if (!deletedPrinter) {
+      throw new ConfiguredLanPrinterNotFoundError(id);
+    }
+
+    printers.splice(printerIndex, 1);
+
+    this.writeConfig({
+      ...config,
+      discovery: config.discovery ?? DEFAULT_CONFIG.discovery,
+      printers,
+    });
+
+    return deletedPrinter;
+  }
+
   getConfigPath(): string {
     return this.configPath;
   }
@@ -270,6 +330,19 @@ export class PrinterConfigService {
 
     const candidate = printer as { id?: unknown; printer_id?: unknown };
     return candidate.id === id || candidate.printer_id === id;
+  }
+
+  private findLanPrinterIndex(printers: unknown[], id: string): number {
+    return printers.findIndex((printer) => {
+      if (!this.matchesPrinterId(printer, id)) return false;
+
+      const normalizedPrinter = this.normalizePrinter(printer as LegacyConfiguredPrinter);
+      return normalizedPrinter?.connection.type === 'tcp';
+    });
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
   }
 
   static ensureDefaultConfigFile(configPath = PrinterConfigService.resolveWritableConfigPath()): string {
