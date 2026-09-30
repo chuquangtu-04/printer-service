@@ -1,0 +1,37 @@
+{
+  "info": {
+    "name": "Printer Service - LAN Discovery",
+    "_postman_id": "a7f55174-1111-4c8a-9e2f-lan-discovery",
+    "description": "One-request collection for scanning LAN printer IPs by the ports configured at discovery.ports in printers.json.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Discover LAN Printers From Config Ports",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/printers/lan/discover",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "printers",
+            "lan",
+            "discover"
+          ]
+        },
+        "description": "Scan the current LAN and return IP addresses that expose ports configured at discovery.ports in printers.json."
+      }
+    }
+  ]
+}

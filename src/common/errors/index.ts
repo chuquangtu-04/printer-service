@@ -20,6 +20,12 @@ export class PrinterNotFoundError extends AppError {
   }
 }
 
+export class ConfiguredLanPrinterNotFoundError extends AppError {
+  constructor(id: string) {
+    super(`Khong tim thay may in LAN da cau hinh: ${id}`, 404);
+  }
+}
+
 export class TemplateNotFoundError extends AppError {
   constructor(template: string) {
     super(`Khong ho tro template: ${template}`, 400);
