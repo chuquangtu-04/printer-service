@@ -16,6 +16,8 @@ export class ConfiguredPrinterDriver {
         status: 'unknown',
         isDefault: false,
         port: this.portLabel(printer.connection),
+        ip: printer.connection.type === 'tcp' ? printer.connection.host : undefined,
+        lanPort: printer.connection.type === 'tcp' ? printer.connection.port ?? 9100 : undefined,
         meta: {
           source: 'config',
           connection: printer.connection,
