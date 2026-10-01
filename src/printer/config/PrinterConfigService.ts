@@ -17,6 +17,7 @@ export interface ConfiguredPrinter {
   id: string;
   name: string;
   enabled: boolean;
+  categoryIds: string[];
   connection: PrinterConnection;
 }
 
@@ -33,11 +34,17 @@ export interface SaveLanPrinterInput {
   name: string;
   host: string;
   port: number;
+  categoryIds?: string[];
 }
 
 export interface UpdateLanPrinterNameInput {
   id: string;
   name: string;
+}
+
+export interface UpdatePrinterCategoriesInput {
+  id: string;
+  categoryIds: string[];
 }
 
 interface PrinterConfigFile {
@@ -62,6 +69,9 @@ interface LegacyConfiguredPrinter {
   port?: unknown;
   enabled?: unknown;
   connection?: unknown;
+  categoryIds?: unknown;
+  category_ids?: unknown;
+  categories?: unknown;
 }
 
 const CONFIG_DIR_NAME = 'TpposPrint';
@@ -85,6 +95,7 @@ const DEFAULT_CONFIG: PrinterConfigFile = {
         port: 9100,
       },
       enabled: false,
+      categoryIds: [],
     },
   ],
 };
@@ -99,6 +110,10 @@ export class PrinterConfigService {
     return config.printers
       .map((printer) => this.normalizePrinter(printer as LegacyConfiguredPrinter))
       .filter((printer): printer is ConfiguredPrinter => printer !== null);
+  }
+
+  getCategoryPrinter(categoryId: string): string | undefined {
+    return this.listPrinters().find((printer) => printer.enabled && printer.categoryIds.includes(categoryId))?.id;
   }
 
   getLanDiscoveryConfig(): LanDiscoveryConfig {
@@ -137,10 +152,15 @@ export class PrinterConfigService {
   saveLanPrinter(input: SaveLanPrinterInput): ConfiguredPrinter {
     const config = this.readConfig();
     const printers = Array.isArray(config.printers) ? [...config.printers] : [];
+    const existingIndex = printers.findIndex((printer) => this.matchesPrinterId(printer, input.id));
+    const existingPrinter = existingIndex >= 0
+      ? this.normalizePrinter(printers[existingIndex] as LegacyConfiguredPrinter)
+      : null;
     const savedPrinter: ConfiguredPrinter = {
       id: input.id,
       name: input.name,
       enabled: true,
+      categoryIds: input.categoryIds ?? existingPrinter?.categoryIds ?? [],
       connection: {
         type: 'tcp',
         host: input.host,
@@ -148,7 +168,6 @@ export class PrinterConfigService {
       },
     };
 
-    const existingIndex = printers.findIndex((printer) => this.matchesPrinterId(printer, input.id));
     if (existingIndex >= 0) {
       printers[existingIndex] = savedPrinter;
     } else {
@@ -162,6 +181,35 @@ export class PrinterConfigService {
     });
 
     return savedPrinter;
+  }
+
+  updatePrinterCategories(input: UpdatePrinterCategoriesInput): ConfiguredPrinter {
+    const config = this.readConfig();
+    const printers = Array.isArray(config.printers) ? [...config.printers] : [];
+    const printerIndex = printers.findIndex((printer) => this.matchesPrinterId(printer, input.id));
+
+    if (printerIndex < 0) {
+      throw new ConfiguredLanPrinterNotFoundError(input.id);
+    }
+
+    const existingPrinter = this.asRecord(printers[printerIndex]);
+    printers[printerIndex] = {
+      ...existingPrinter,
+      categoryIds: [...new Set(input.categoryIds)],
+    };
+
+    this.writeConfig({
+      ...config,
+      discovery: config.discovery ?? DEFAULT_CONFIG.discovery,
+      printers,
+    });
+
+    const updatedPrinter = this.normalizePrinter(printers[printerIndex] as LegacyConfiguredPrinter);
+    if (!updatedPrinter) {
+      throw new ConfiguredLanPrinterNotFoundError(input.id);
+    }
+
+    return updatedPrinter;
   }
 
   updateLanPrinterName(input: UpdateLanPrinterNameInput): ConfiguredPrinter {
@@ -236,8 +284,19 @@ export class PrinterConfigService {
       id,
       name,
       enabled,
+      categoryIds: this.normalizeCategoryIds(printer),
       connection,
     };
+  }
+
+  private normalizeCategoryIds(printer: LegacyConfiguredPrinter): string[] {
+    const values = [
+      ...this.stringArrayValue((printer as { categoryIds?: unknown }).categoryIds),
+      ...this.stringArrayValue((printer as { category_ids?: unknown }).category_ids),
+      ...this.stringArrayValue((printer as { categories?: unknown }).categories),
+    ];
+
+    return [...new Set(values)];
   }
 
   private normalizeConnection(printer: LegacyConfiguredPrinter): PrinterConnection | null {
@@ -282,6 +341,14 @@ export class PrinterConfigService {
 
   private stringValue(value: unknown): string | undefined {
     return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  }
+
+  private stringArrayValue(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .map((item) => this.stringValue(item))
+      .filter((item): item is string => item !== undefined);
   }
 
   private numberValue(value: unknown): number | undefined {

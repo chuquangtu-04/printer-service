@@ -14,6 +14,7 @@ interface PrintJobRow {
   printer: string;
   printer_name: string;
   template: string;
+  category_id: string | null;
   payload_json: string | null;
   buffer: Uint8Array;
   status: PrintJobStatus;
@@ -49,15 +50,16 @@ export class QueueRepository {
     const now = new Date().toISOString();
     const result = this.db.prepare(`
       INSERT INTO print_jobs (
-        queue_key, printer, printer_name, template, payload_json, buffer, status,
+        queue_key, printer, printer_name, template, category_id, payload_json, buffer, status,
         attempts, max_attempts, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, 'waiting', 0, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting', 0, ?, ?, ?)
     `).run(
       input.queueKey,
       input.printer,
       input.printerName,
       input.template,
+      input.categoryId ?? null,
       toJsonText(input.data),
       input.buffer,
       input.maxAttempts,
@@ -189,6 +191,7 @@ export class QueueRepository {
       printer: job.printer,
       printerName: job.printerName,
       template: job.template,
+      categoryId: job.categoryId,
       attempts: job.attempts,
       maxAttempts: job.maxAttempts,
       createdAt: job.createdAt,
@@ -214,6 +217,7 @@ export class QueueRepository {
         printer TEXT NOT NULL,
         printer_name TEXT NOT NULL,
         template TEXT NOT NULL,
+        category_id TEXT,
         payload_json TEXT,
         buffer BLOB NOT NULL,
         status TEXT NOT NULL,
@@ -233,6 +237,7 @@ export class QueueRepository {
     `);
 
     this.ensureColumn('print_jobs', 'payload_json', 'TEXT');
+    this.ensureColumn('print_jobs', 'category_id', 'TEXT');
     this.resetInterruptedJobs();
     this.cleanupCompletedJobs();
   }
@@ -291,6 +296,7 @@ export class QueueRepository {
       printer: row.printer,
       printerName: row.printer_name,
       template: row.template,
+      categoryId: row.category_id ?? undefined,
       data: fromJsonText(row.payload_json),
       buffer: Buffer.from(row.buffer),
       status: row.status,

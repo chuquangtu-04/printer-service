@@ -110,6 +110,17 @@ export class LanPrinterDiscovery {
     return { subnetIp: firstInterface.address, netmask: firstInterface.netmask };
   }
 
+  private getPreferredIPv4Interfaces(): LocalIPv4Interface[] {
+    const interfaces = this.getLocalIPv4Interfaces();
+    const physicalInterfaces = interfaces.filter((item) => !this.isVirtualInterface(item.name));
+
+    return physicalInterfaces.length > 0 ? physicalInterfaces : interfaces;
+  }
+
+  private isVirtualInterface(name: string): boolean {
+    return /\b(vethernet|wsl|docker|hyper-v|virtualbox|vmware|loopback)\b/i.test(name);
+  }
+
   private async checkHost(ip: string, ports: number[], timeoutMs?: number): Promise<HostCheckResult | null> {
     const openPorts: number[] = [];
 
