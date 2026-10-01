@@ -62,8 +62,21 @@ export const saveLanPrinter = async (req: Request, res: Response, next: NextFunc
     const name = requiredString(req.body?.name, 'name');
     const host = requiredIPv4(req.body?.host, 'host');
     const port = optionalPort(req.body?.port);
+    const categoryIds = optionalStringArray(req.body?.categoryIds, 'categoryIds');
 
-    const result = printerService.saveLanPrinter({ id, name, host, port });
+    const result = printerService.saveLanPrinter({ id, name, host, port, categoryIds });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updatePrinterCategories = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = requiredPrinterId(req.params.id);
+    const categoryIds = requiredStringArray(req.body?.categoryIds, 'categoryIds');
+
+    const result = printerService.updatePrinterCategories({ id, categoryIds });
     res.json(result);
   } catch (err) {
     next(err);
@@ -118,6 +131,20 @@ function requiredString(value: unknown, field: string): string {
   }
 
   return value.trim();
+}
+
+function optionalStringArray(value: unknown, field: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  return requiredStringArray(value, field);
+}
+
+function requiredStringArray(value: unknown, field: string): string[] {
+  if (!Array.isArray(value)) {
+    throw new ValidationError(`Thieu hoac sai kieu field "${field}"`);
+  }
+
+  const values = value.map((item) => requiredString(item, field));
+  return [...new Set(values)];
 }
 
 function requiredPrinterId(value: unknown): string {

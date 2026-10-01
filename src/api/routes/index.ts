@@ -7,6 +7,7 @@ import {
   saveLanPrinter,
   testLanPrinter,
   testPrint,
+  updatePrinterCategories,
   updateLanPrinterName,
 } from '../controllers/printerController';
 import { clearQueue, getFailedQueue, getQueue, retryQueue } from '../controllers/queueController';
@@ -22,6 +23,7 @@ router.get('/printers/lan/discover', discoverLanPrinters);
 router.get('/printers', getPrinters);
 router.post('/printers/lan/test', testLanPrinter);
 router.post('/printers/lan/save', saveLanPrinter);
+router.patch('/printers/:id/categories', updatePrinterCategories);
 router.patch('/printers/lan/:id', updateLanPrinterName);
 router.delete('/printers/lan/:id', deleteLanPrinter);
 

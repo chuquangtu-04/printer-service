@@ -10,12 +10,13 @@
     {
       "id": "kitchen-01",
       "name": "May in bep",
+      "enabled": false,
+      "categoryIds": ["mon-bep"],
       "connection": {
         "type": "tcp",
         "host": "192.168.1.100",
         "port": 9100
-      },
-      "enabled": false
+      }
     }
   ]
 }

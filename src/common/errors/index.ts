@@ -26,6 +26,12 @@ export class ConfiguredLanPrinterNotFoundError extends AppError {
   }
 }
 
+export class CategoryPrinterNotConfiguredError extends AppError {
+  constructor(categoryId: string) {
+    super(`Danh muc chua cau hinh may in: ${categoryId}`, 400);
+  }
+}
+
 export class TemplateNotFoundError extends AppError {
   constructor(template: string) {
     super(`Khong ho tro template: ${template}`, 400);
